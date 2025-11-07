@@ -7,9 +7,11 @@ import '@/styles/globals.css'
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang='en'>
-      <Layout>{children}</Layout>
-      <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID || ''} />
-      <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || ''} />
+      <body className={` antialiased`}>
+        <Layout>{children}</Layout>
+        <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID || ''} />
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || ''} />
+      </body>
     </html>
   )
 }
