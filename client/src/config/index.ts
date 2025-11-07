@@ -1,14 +1,14 @@
 export const appinfo = {
-  name: 'WELLNCHER',
-  title: 'WELLNCHER',
-  titleTemplate: '%s - WELLNCHER',
-  description: 'WELLNCHER - Place to relax',
+  name: 'NHIV(Natural heritage Map-based information visualization)',
+  title: 'NHIV',
+  titleTemplate: '%s - NHIV',
+  description: '자연유산 지도기반 시각화',
   keywords: [],
   authors: [
     {
-      name: 'bricksseoul',
-      email: 'info@bricksseoul.com',
+      name: 'SEJIN OH',
+      email: 'ohsejiin@gmail.com',
     },
   ],
-  url: 'https://wellncher.vercel.app',
+  url: 'https://nhiv.vercel.app',
 }

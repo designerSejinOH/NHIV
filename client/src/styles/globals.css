@@ -26,9 +26,7 @@
   --aspect-landscape: 16 / 9;
 
   /* color */
-  --color-primary: #3E160C;
-  --color-disabled: #513E39;
-  --color-background: #EFECE7;
+  --color-background: #FFFFFF;
 }
 
 @layer base {
@@ -93,8 +91,6 @@
   body {
     margin: 0;
     padding: 0;
-    font-family: var(--font-ibm-plex-sans-kr),
-      sans-serif;
     /* 16px */
     font-size: 100%;
     background-color: var(--color-background);
