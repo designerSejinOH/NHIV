@@ -1,0 +1,163 @@
+@import "tailwindcss";
+
+@theme {
+  /* font-size */
+  --text-xxxs: 0.6rem;
+  --text-xxs: 0.65rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-md: 1.125rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 1.875rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: 3rem;
+  --text-5xl: 3.75rem;
+  --text-6xl: 4.5rem;
+  --text-7xl: 5.25rem;
+  --text-8xl: 6rem;
+  --text-9xl: 7.5rem;
+
+  /* aspect-ratio */
+  --aspect-square: 1 / 1;
+  --aspect-video: 16 / 9;
+  --aspect-portrait: 9 / 16;
+  --aspect-landscape: 16 / 9;
+
+  /* color */
+  --color-primary: #3E160C;
+  --color-disabled: #513E39;
+  --color-background: #EFECE7;
+}
+
+@layer base {
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  div {
+    white-space: pre-wrap;
+  }
+
+  :root {
+    --sat: env(safe-area-inset-top);
+    --sar: env(safe-area-inset-right);
+    --sab: env(safe-area-inset-bottom);
+    --sal: env(safe-area-inset-left);
+  }
+
+  input,
+  textarea {
+    appearance: none;
+    -webkit-appearance: none;
+    -webkit-border-radius: 0;
+  }
+
+
+
+  input:focus,
+  textarea:focus {
+    outline: none;
+    caret-color: #000000;
+  }
+
+  input:-internal-autofill-selected {
+    background-color: #FFFCF9 !important;
+    color: #000 !important;
+  }
+
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    /*화살표 배경 넣기*/
+    /* background: #fff url('이미지경로') no-repeat 98% center; */
+  }
+
+  select::-ms-expand {
+    /* 화살표 없애기 for IE10, 11*/
+    display: none;
+  }
+
+  /* 영어일때, 한글일때 폰트 다르게 */
+  :lang(en) {
+    /* @apply font-geist-sans; */
+  }
+
+  #__next,
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-ibm-plex-sans-kr),
+      sans-serif;
+    /* 16px */
+    font-size: 100%;
+    background-color: var(--color-background);
+  }
+
+  /* ( 크롬, 사파리, 오페라, 엣지 ) 동작 */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scroll-bar {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+  }
+
+  .no-scroll-bar::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari, Opera*/
+  }
+
+  .checking {
+    /*  border border-red-500 border-dashed */
+    border: 1px solid red;
+    border-style: dashed;
+  }
+
+  .snap-none {
+    scroll-snap-type: none !important;
+  }
+
+  .show-scrollbar {
+    /* 파이어폭스 */
+    scrollbar-width: thin;
+    scrollbar-color: #888 #f1f1f1;
+
+    /* IE */
+    -ms-overflow-style: scrollbar;
+  }
+
+  /* 웹킷 기반 브라우저 (크롬, 사파리, 오페라, 엣지) */
+  .show-scrollbar::-webkit-scrollbar {
+    display: block;
+    width: 8px;
+    /* 스크롤바 너비 */
+  }
+
+  .show-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    /* 스크롤바 트랙 색상 */
+  }
+
+  .show-scrollbar::-webkit-scrollbar-thumb {
+    background: #888;
+    /* 스크롤바 색상 */
+    border-radius: 4px;
+    /* 스크롤바 모서리 둥글게 */
+  }
+
+  .show-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #555;
+    /* 스크롤바 호버 색상 */
+  }
+
+}

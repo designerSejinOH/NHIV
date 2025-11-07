@@ -1,6 +1,6 @@
 'use client'
 
-import { forwardRef, Suspense, useImperativeHandle, useRef } from 'react'
+import { forwardRef, Suspense, useImperativeHandle, useRef, type MutableRefObject } from 'react'
 import { Html, OrbitControls, PerspectiveCamera, View as ViewImpl } from '@react-three/drei'
 import { Three } from '@/helpers/components/Three'
 import * as THREE from 'three'
@@ -39,14 +39,14 @@ interface ViewProps {
 }
 
 const View = forwardRef(({ children, orbit, perf, ...props }: ViewProps, ref) => {
-  const localRef = useRef(null)
+  const localRef = useRef<HTMLDivElement | null>(null)
   useImperativeHandle(ref, () => localRef.current)
 
   return (
     <>
       <div ref={localRef} {...props} />
       <Three>
-        <ViewImpl track={localRef}>
+        <ViewImpl track={localRef as unknown as MutableRefObject<HTMLElement>}>
           {children}
           {orbit && <OrbitControls />}
           {perf && <Perf position='top-left' />}
