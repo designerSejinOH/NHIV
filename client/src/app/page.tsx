@@ -4,6 +4,8 @@ import { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Box, OrbitControls } from '@react-three/drei'
+import { Map } from '@/components'
+import { LiveLocationLayer } from '@/components/Map/LiveLocationLayer'
 
 export default function Home() {
   return (
@@ -21,8 +23,9 @@ export default function Home() {
         </Canvas>
       </main>
       <main className='w-full md:w-1/2 h-1/2 md:h-full relative flex flex-col items-center justify-center'>
-        <h1 className='text-4xl font-bold mb-4'>Welcome Page</h1>
-        <p className='text-lg text-center'>This is a sample Next.js application with a 3D canvas.</p>
+        <Map defaultCenter={null} defaultZoom={15}>
+          <LiveLocationLayer />
+        </Map>
       </main>
     </div>
   )
