@@ -3,6 +3,7 @@
 import { GoogleMap } from '@react-google-maps/api'
 import { useMemo, useCallback, useRef, memo } from 'react'
 import { useGoogleMaps } from '@/app/providers/GoogleMapsProvider'
+import { mapStyle } from './styles'
 
 interface MapProps {
   defaultCenter?: { lat: number; lng: number } | null
@@ -26,10 +27,11 @@ function MapBase({ defaultCenter, defaultZoom = 10, children }: MapProps) {
       <div
         style={{
           width: '100%',
-          height: '100dvh',
+          height: '100%',
           display: 'grid',
           placeItems: 'center',
         }}
+        className='bg-[#028261] text-white font-medium'
       >
         로딩중...
       </div>
@@ -39,12 +41,16 @@ function MapBase({ defaultCenter, defaultZoom = 10, children }: MapProps) {
   return (
     <GoogleMap
       onLoad={onMapLoad}
-      mapContainerStyle={{ width: '100%', height: '100dvh' }}
+      mapContainerStyle={{
+        width: '100%',
+        height: '100%',
+        outline: 'none', // ⭐ 포커스 아웃라인 제거
+      }}
       center={center}
       zoom={defaultZoom}
       options={{
         gestureHandling: 'greedy',
-        disableDefaultUI: true,
+        disableDefaultUI: false,
         streetViewControl: false,
         mapTypeControl: false,
         fullscreenControl: false,
@@ -52,6 +58,7 @@ function MapBase({ defaultCenter, defaultZoom = 10, children }: MapProps) {
         clickableIcons: false,
         keyboardShortcuts: false,
         scaleControl: false,
+        styles: mapStyle,
       }}
     >
       {children}

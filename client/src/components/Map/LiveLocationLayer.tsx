@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CircleF, MarkerF, useGoogleMap } from '@react-google-maps/api'
 import { useGeolocation } from '@/hooks/useGeolocation'
+import { AnimatePresence, motion } from 'framer-motion'
 
 type Tracking = false | 'observe' | 'follow'
 
@@ -54,17 +55,27 @@ export function LiveLocationLayer() {
   return (
     <>
       {/* 권한/에러 안내: 필요 시 UI로 치장 */}
-      {((!loc && (permission === 'prompt' || permission === 'unknown')) || permission === 'denied' || error) && (
-        <div className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[1] rounded-md bg-black/50 backdrop-blur-md px-3 py-2 w-[80vw] text-sm shadow'>
-          {!loc && (permission === 'prompt' || permission === 'unknown') && (
-            <div className=''>위치 권한을 허용해 주세요.</div>
-          )}
-          {permission === 'denied' && (
-            <div className=''>위치 접근이 거부되었습니다. 브라우저 설정에서 허용해 주세요.</div>
-          )}
-          {error && <div className=''>{error}</div>}
-        </div>
-      )}
+      <AnimatePresence>
+        {((!loc && (permission === 'prompt' || permission === 'unknown')) || permission === 'denied' || error) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            style={{
+              transformOrigin: 'center',
+            }}
+            className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[1] bg-[#028261] font-medium text-white backdrop-blur-md px-3 py-2 w-fit text-sm shadow'
+          >
+            {!loc && (permission === 'prompt' || permission === 'unknown') && (
+              <div className=''>위치 권한을 허용해 주세요.</div>
+            )}
+            {permission === 'denied' && (
+              <div className=''>위치 접근이 거부되었습니다. 브라우저 설정에서 허용해 주세요.</div>
+            )}
+            {error && <div className=''>{error}</div>}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 현재 위치 & 정확도 */}
       {loc && (
@@ -84,11 +95,14 @@ export function LiveLocationLayer() {
       )}
 
       {/* 오른쪽 하단 컨트롤 버튼들 */}
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
         style={{
           bottom: 0,
         }}
-        className='absolute right-3 z-10 grid gap-2'
+        className='absolute right-2 top-2 w-fit h-fit z-10 flex flex-col gap-2'
       >
         <button
           onClick={() => {
@@ -96,17 +110,17 @@ export function LiveLocationLayer() {
             setTracking('follow')
             map.panTo({ lat: loc.lat, lng: loc.lng })
           }}
-          className='rounded-md bg-black px-3 py-2 text-sm shadow'
+          className='w-full h-fit cursor-pointer bg-[#028261] font-medium text-white px-3 py-2 text-sm shadow md:hover:bg-[#02664f] active:scale-95 transition-all'
         >
           현재 위치로
         </button>
-        <button
+        {/* <button
           onClick={() => setTracking((t) => (t === 'follow' ? 'observe' : 'follow'))}
-          className='rounded-md bg-black px-3 py-2 text-sm shadow'
+          className='w-full h-fit rounded-md bg-white px-3 py-2 text-sm shadow'
         >
           {tracking === 'follow' ? '따라가기 끄기' : '따라가기 켜기'}
-        </button>
-      </div>
+        </button> */}
+      </motion.div>
     </>
   )
 }

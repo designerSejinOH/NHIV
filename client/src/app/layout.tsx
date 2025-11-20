@@ -2,13 +2,28 @@ import type { Metadata, Viewport } from 'next'
 import { appinfo } from '@/config'
 import { Layout } from '@/components'
 import { GoogleAnalytics, GoogleTagManager } from '@next/third-parties/google'
+import localFont from 'next/font/local'
 import '@/styles/globals.css'
+import GoogleMapsProvider from '@/app/providers/GoogleMapsProvider'
+
+const notoSansKR = localFont({
+  src: [
+    {
+      path: '../../public/fonts/NotoSansKR-VariableFont_wght.ttf',
+      weight: '100 900',
+    },
+  ],
+  variable: '--font-noto-sans-kr',
+  display: 'swap',
+})
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang='en'>
-      <body className={` antialiased`}>
-        <Layout>{children}</Layout>
+      <body className={`${notoSansKR.className} antialiased`}>
+        <GoogleMapsProvider>
+          <Layout>{children}</Layout>
+        </GoogleMapsProvider>
         <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID || ''} />
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || ''} />
       </body>

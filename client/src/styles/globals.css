@@ -26,7 +26,14 @@
   --aspect-landscape: 16 / 9;
 
   /* color */
-  --color-background: #FFFFFF;
+  --color-background: #FEFBF6;
+  --color-primary: #3EBA72;
+  --color-secondary: #42C86F;
+  --color-tertiary: #9ACF8B;
+  --color-text-primary: #1F1F21;
+
+  /* font */
+  --font-notoSansKR: 'Noto Sans KR', sans-serif;
 }
 
 @layer base {
@@ -92,8 +99,19 @@
     margin: 0;
     padding: 0;
     /* 16px */
+    font-family: var(--font-notoSansKR);
     font-size: 100%;
+    overscroll-behavior: none;
+    -webkit-touch-callout: none;
     background-color: var(--color-background);
+  }
+
+  canvas {
+    touch-action: none;
+  }
+
+  .no-pointer-events {
+    pointer-events: none;
   }
 
   /* ( 크롬, 사파리, 오페라, 엣지 ) 동작 */
