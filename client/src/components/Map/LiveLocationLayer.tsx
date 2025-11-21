@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { CircleF, MarkerF, useGoogleMap } from '@react-google-maps/api'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { AnimatePresence, motion } from 'framer-motion'
+import { GrLocation } from 'react-icons/gr'
 
 type Tracking = false | 'observe' | 'follow'
 
@@ -110,8 +111,9 @@ export function LiveLocationLayer() {
             setTracking('follow')
             map.panTo({ lat: loc.lat, lng: loc.lng })
           }}
-          className='w-full h-fit cursor-pointer bg-[#028261] font-medium text-white px-3 py-2 text-sm shadow md:hover:bg-[#02664f] active:scale-95 transition-all'
+          className='w-full h-fit cursor-pointer flex justify-center items-center bg-[#028261] font-medium text-white pl-2 pr-3 py-2 text-sm shadow md:hover:bg-[#02664f] active:scale-95 transition-all'
         >
+          <GrLocation className='inline mr-1' />
           현재 위치로
         </button>
         {/* <button

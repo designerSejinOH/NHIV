@@ -3,22 +3,57 @@
 import { Suspense, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import * as THREE from 'three'
-import { Box, OrbitControls } from '@react-three/drei'
+import { Box, OrbitControls, Sky } from '@react-three/drei'
 import { Map } from '@/components'
 import { LiveLocationLayer } from '@/components/Map/LiveLocationLayer'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiChevronDown, FiSearch } from 'react-icons/fi'
 import { GrFormUp, GrFormDown, GrCheckbox, GrCheckboxSelected } from 'react-icons/gr'
 import classNames from 'classnames'
+import { OVERLAY_MOUSE_TARGET, OverlayViewF } from '@react-google-maps/api'
+import { View, Common } from '@/components/canvas/View' // 경로는 네 프로젝트에 맞게
 
 export default function Home() {
   const [isPageInfo, setIsPageInfo] = useState(false)
+  const [selectedHeritage, setSelectedHeritage] = useState<{
+    isSelected: boolean
+    data: any
+  } | null>(null)
 
   const [currentFilter, setCurrentFilter] = useState<string[] | null>([
     '멸종위기 야생동물',
     '천연기념물',
     '해양보호생물',
   ])
+
+  const temp_items = [
+    {
+      no: 1,
+      specie_id: 'SP0017',
+      loc: [37.427715, 127.016968],
+      address: '서울대공원, 경기도 과천시 대공원광장로 102',
+      name: {
+        ko: '수달',
+        en: 'Common Otter',
+        binomial: 'Lutra lutra',
+      },
+      분류: '포유류',
+      성별: '수',
+      성장단계: '성체',
+      크기: null,
+      폐사일자: '2022-01-15',
+      표본제작일자: '2022-03-10',
+      제작자: null,
+      수명: null,
+      식성: '물고기, 양서류, 갑각류, 조류 등',
+      천적: null,
+      서식지:
+        '전국 하천, 계곡, 호수, 저수지 일대, 가까운 연안의 섬 지방, 하천, 호숫가, 물가의 바위구멍이나 나무뿌리 밑',
+      분포지: '유라시아(시베리아 제외), 아프리카(북부 포함), 오스트레일리아·남극 제외 전 대륙',
+      iucn: 'NT(Near Threatened)',
+      국가보호종: '멸종위기 야생생물; 천연기념물',
+    },
+  ]
 
   return (
     <div className='w-full h-dvh flex flex-col gap-0 break-keep overflow-hidden'>
@@ -120,7 +155,7 @@ export default function Home() {
           {/* 타이틀/설명 등 */}
           <h1 className='text-3xl font-bold'>자연유산 DB 지도기반시각화</h1>
 
-          <h3 className='text-lg font-normal leading-tight'>
+          <h3 className='text-[1.2vw] font-normal leading-tight'>
             디지털 박물관 서비스를 위한 AI 기반 <br />
             네이처 복원 기술 개발
           </h3>
@@ -135,11 +170,11 @@ export default function Home() {
         {/* 필터/3D 영역 - 좌하단 */}
         <section className='col-start-1 row-start-2 bg-[#E0F2E6] text-[#028261] flex flex-col gap-2 pb-2 justify-start items-center min-h-0'>
           <div className='w-full h-fit flex flex-col gap-2 bg-[#3EBA72] text-white p-3'>
-            <span className='text-xl font-semibold flex flex-row items-center gap-2'>
+            <span className='text-lg font-semibold flex flex-row items-center gap-2'>
               <FiSearch />
               필터 선택
             </span>
-            <span className='text-base'>데이터 탐색 흐름 통제</span>
+            <span className='text-base font-medium'>데이터 탐색 흐름 통제</span>
           </div>
           <div className='w-full h-fit flex flex-col gap-2 px-2'>
             <span className='text-lg font-semibold flex flex-row items-center gap-2'>현재 선택된 필터</span>
@@ -205,10 +240,144 @@ export default function Home() {
           </div>
         </section>
         {/* 맵 - 오른쪽 전체 */}
-        <section className='col-start-2 row-span-2 flex'>
+        <section className='col-start-2 row-span-2 flex relative'>
           <Map defaultCenter={null} defaultZoom={15}>
+            {/* 데이터 좌표로 맵핑 */}
+            {temp_items.map((item) => (
+              <OverlayViewF
+                key={item.no}
+                position={{ lat: item.loc[0], lng: item.loc[1] }}
+                mapPaneName={OVERLAY_MOUSE_TARGET}
+              >
+                <div
+                  onClick={() => setSelectedHeritage({ isSelected: true, data: item })}
+                  style={{
+                    position: 'absolute',
+                    transform: 'translate(-50%, -100%)',
+                    pointerEvents: 'auto',
+                  }}
+                  className=' w-fit h-fit flex flex-row gap-2 bg-white p-2 shadow-lg items-center justify-center cursor-pointer hover:bg-[#F5FDF8] active:scale-95 transition-all'
+                >
+                  <div className='w-6 h-6 bg-[#3EBA72]' />
+                  <span className='w-fit h-fit text-sm font-medium text-black'>{item.name.ko}</span>
+                </div>
+              </OverlayViewF>
+            ))}
             <LiveLocationLayer />
           </Map>
+          <AnimatePresence mode='wait'>
+            {selectedHeritage?.isSelected && (
+              <motion.div
+                key='heritage-modal' // 모달 전체에 key 추가
+                className='absolute inset-0 bg-black/50 flex flex-col items-end justify-start z-50 p-10'
+                initial={{
+                  opacity: 0,
+                }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ type: 'tween', duration: 0.2 }} // duration 줄이기
+                onClick={
+                  () => setSelectedHeritage(null) // 배경 클릭 시 닫기
+                }
+              >
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  transition={{ type: 'tween', duration: 0.15 }} // duration 줄이기
+                  onClick={(e) => e.stopPropagation()} // 내용 클릭 시 이벤트 버블링 방지
+                  className={classNames(
+                    'w-4/5 relative h-full bg-white text-[#028261] p-2',
+                    'grid grid-cols-[3fr_2fr] gap-2',
+                    'min-h-0',
+                  )}
+                >
+                  {/* 왼쪽 컬럼 */}
+                  <div className='col-start-1 flex flex-col gap-2 min-h-0'>
+                    {/* 3D: 아래, 남은 공간 꽉 채우기 */}
+                    <div className='bg-[#F6FFFA] flex-1 min-h-0 relative'>
+                      <div className='absolute inset-0'>
+                        <Canvas
+                          key={`canvas-${selectedHeritage.data.no}`} // 고유 key로 변경
+                          className='cursor-grab active:cursor-grabbing'
+                          camera={{ position: [0, 0, 5], fov: 40 }}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'block',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                          }}
+                          gl={{
+                            preserveDrawingBuffer: true,
+                          }}
+                          onCreated={({ gl, camera }) => {
+                            // Canvas 생성 시 명시적으로 초기화
+                            gl.setSize(
+                              gl.domElement.parentElement!.clientWidth,
+                              gl.domElement.parentElement!.clientHeight,
+                            )
+                            camera.position.set(0, 0, 5)
+                            camera.lookAt(0, 0, 0)
+                          }}
+                        >
+                          <Suspense fallback={null}>
+                            <Sky />
+                            <ambientLight intensity={0.5} />
+                            <pointLight position={[10, 10, 10]} intensity={1} />
+
+                            <OrbitControls
+                              enableDamping
+                              dampingFactor={0.05}
+                              minDistance={2}
+                              maxDistance={10}
+                              minPolarAngle={0}
+                              maxPolarAngle={Math.PI / 2}
+                              target={[0, 0, 0]}
+                              makeDefault
+                            />
+                          </Suspense>
+                        </Canvas>
+                      </div>
+                    </div>
+                    {/* Info: 위쪽, 콘텐츠 높이만 */}
+                    <div className='bg-[#028261] text-white p-2 flex flex-col gap-2'>탭 관리 영역</div>
+                  </div>
+
+                  {/* 오른쪽 컬럼 */}
+                  <div className='col-start-2 flex flex-col gap-2 min-h-0'>
+                    {/* 정보 헤더 영역: 예를 들어 위가 더 크거나 auto */}
+                    <div className='bg-[#3EBA72] text-white h-fit p-2 flex flex-col gap-2 relative'>
+                      <button
+                        onClick={() => setSelectedHeritage(null)}
+                        className='absolute top-0 right-0 p-2 text-white flex items-center justify-center hover:opacity-80 active:scale-95 transition-all cursor-pointer'
+                      >
+                        <svg
+                          xmlns='http://www.w3.org/2000/svg'
+                          fill='none'
+                          viewBox='0 0 24 24'
+                          strokeWidth={2}
+                          stroke='currentColor'
+                          className='w-8 h-8'
+                        >
+                          <path d='M6 18L18 6M6 6l12 12' />
+                        </svg>
+                      </button>
+                      <span className='text-2xl font-bold'>{selectedHeritage.data.name.ko}</span>
+                      <span className='text-base font-medium'>{selectedHeritage.data.name.en}</span>
+                    </div>
+                    {/* 상세 정보 영역: 남은 공간 + 내부 스크롤 */}
+                    <div className='bg-[#E0F2E6] text-[#028261] flex-1 min-h-0 overflow-y-auto p-2'>
+                      상세 정보 영역
+                      <br />
+                      내용이 길어져도 여기서만 스크롤
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </section>
       </div>
       {/* copyright */}

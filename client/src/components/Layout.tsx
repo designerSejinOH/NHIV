@@ -2,7 +2,6 @@
 
 import { useRef } from 'react'
 import dynamic from 'next/dynamic'
-const Scene = dynamic(() => import('@/components/canvas/Scene'), { ssr: false })
 
 interface LayoutProps {
   children: React.ReactNode
@@ -23,18 +22,6 @@ const Layout = ({ children }: LayoutProps) => {
       }}
     >
       {children}
-      <Scene
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          pointerEvents: 'none',
-        }}
-        eventSource={ref}
-        eventPrefix='client'
-      />
     </div>
   )
 }

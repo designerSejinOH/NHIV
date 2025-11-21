@@ -19,15 +19,13 @@ export const Common = ({ color }: CommonProps) => (
       </Html>
     }
   >
-    {/* @ts-ignore */}
     {color && <color attach='background' args={[color]} />}
-    {/* @ts-ignore */}
     <ambientLight />
-    {/* @ts-ignore */}
     <pointLight position={[10, 10, 10]} />
-    {/* @ts-ignore */}
     <pointLight position={[-10, -10, -10]} color='blue' decay={0.2} />
-    <PerspectiveCamera makeDefault fov={40} position={[0, 0, 0]} />
+
+    {/* 🔥 카메라를 뒤로 빼기 */}
+    <PerspectiveCamera makeDefault fov={40} position={[0, 0, 5]} />
   </Suspense>
 )
 
