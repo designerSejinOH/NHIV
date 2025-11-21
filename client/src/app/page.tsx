@@ -12,6 +12,7 @@ import { GrFormUp, GrFormDown, GrCheckbox, GrCheckboxSelected } from 'react-icon
 import classNames from 'classnames'
 import { OVERLAY_MOUSE_TARGET, OverlayViewF } from '@react-google-maps/api'
 import { View, Common } from '@/components/canvas/View' // 경로는 네 프로젝트에 맞게
+import { Scene } from './Scene'
 
 export default function Home() {
   const [isPageInfo, setIsPageInfo] = useState(false)
@@ -25,6 +26,8 @@ export default function Home() {
     '천연기념물',
     '해양보호생물',
   ])
+  const ex_modelUrls = ['/data/opt1.glb', '/data/opt2.glb', '/data/origin-v1.glb']
+  const [modelUrl, setModelUrl] = useState<string>('')
 
   const temp_items = [
     {
@@ -250,7 +253,10 @@ export default function Home() {
                 mapPaneName={OVERLAY_MOUSE_TARGET}
               >
                 <div
-                  onClick={() => setSelectedHeritage({ isSelected: true, data: item })}
+                  onClick={() => {
+                    setSelectedHeritage({ isSelected: true, data: item })
+                    setModelUrl(ex_modelUrls[0] || '')
+                  }}
                   style={{
                     position: 'absolute',
                     transform: 'translate(-50%, -100%)',
@@ -297,52 +303,27 @@ export default function Home() {
                     {/* 3D: 아래, 남은 공간 꽉 채우기 */}
                     <div className='bg-[#F6FFFA] flex-1 min-h-0 relative'>
                       <div className='absolute inset-0'>
-                        <Canvas
-                          key={`canvas-${selectedHeritage.data.no}`} // 고유 key로 변경
-                          className='cursor-grab active:cursor-grabbing'
-                          camera={{ position: [0, 0, 5], fov: 40 }}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            display: 'block',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                          }}
-                          gl={{
-                            preserveDrawingBuffer: true,
-                          }}
-                          onCreated={({ gl, camera }) => {
-                            // Canvas 생성 시 명시적으로 초기화
-                            gl.setSize(
-                              gl.domElement.parentElement!.clientWidth,
-                              gl.domElement.parentElement!.clientHeight,
-                            )
-                            camera.position.set(0, 0, 5)
-                            camera.lookAt(0, 0, 0)
-                          }}
-                        >
-                          <Suspense fallback={null}>
-                            <Sky />
-                            <ambientLight intensity={0.5} />
-                            <pointLight position={[10, 10, 10]} intensity={1} />
-
-                            <OrbitControls
-                              enableDamping
-                              dampingFactor={0.05}
-                              minDistance={2}
-                              maxDistance={10}
-                              minPolarAngle={0}
-                              maxPolarAngle={Math.PI / 2}
-                              target={[0, 0, 0]}
-                              makeDefault
-                            />
-                          </Suspense>
-                        </Canvas>
+                        <Scene
+                          sceneKey={`${selectedHeritage.data.no}-${modelUrl}`} // 🔥 모델 바뀔 때마다 완전 리셋
+                          modelUrl={modelUrl}
+                        />
                       </div>
                     </div>
                     {/* Info: 위쪽, 콘텐츠 높이만 */}
-                    <div className='bg-[#028261] text-white p-2 flex flex-col gap-2'>탭 관리 영역</div>
+                    <div className='bg-[#028261] text-white p-2 flex flex-row gap-2'>
+                      {ex_modelUrls.map((url, idx) => (
+                        <button
+                          key={url}
+                          onClick={() => setModelUrl(url)}
+                          className={classNames(
+                            'w-fit px-4 h-10 flex justify-center items-center font-medium hover:opacity-80 active:scale-95 transition-all cursor-pointer',
+                            modelUrl === url ? 'bg-white text-[#028261]' : 'bg-[#02674C] text-white',
+                          )}
+                        >
+                          {idx === 0 ? '2048px' : idx === 1 ? '4096px' : '원본'}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* 오른쪽 컬럼 */}
@@ -371,7 +352,7 @@ export default function Home() {
                     <div className='bg-[#E0F2E6] text-[#028261] flex-1 min-h-0 overflow-y-auto p-2'>
                       상세 정보 영역
                       <br />
-                      내용이 길어져도 여기서만 스크롤
+                      스크롤
                     </div>
                   </div>
                 </motion.div>
