@@ -50,7 +50,7 @@ export default function Home() {
       habitats:
         '전국 하천, 계곡, 호수, 저수지 일대, 가까운 연안의 섬 지방, 하천, 호숫가, 물가의 바위구멍이나 나무뿌리 밑', //서식지
       distribution_regions: '유라시아(시베리아 제외), 아프리카(북부 포함), 오스트레일리아·남극 제외 전 대륙', //분포지
-      icus_status_code: 'NT(Near Threatened)', //IUCN 적색목록
+      iucn_status_code: 'NT(Near Threatened)', //IUCN 적색목록
 
       //filter 1
       national_protection_status: ['멸종위기 야생생물', '천연기념물'], //국가 보호종
@@ -67,8 +67,8 @@ export default function Home() {
       latlng: [37.427715, 127.016968], //위도/경도
 
       //filter 2
-      death_date: '2018-01-26', //폐사일자
-      specimen_made_date: '2018-06', // 표본제작일자
+      death_date: '2019-01-28', //폐사일자
+      specimen_made_date: '2019-07', // 표본제작일자
 
       //filter 1
       specimen_made_by: null, //제작자 *nullable
@@ -86,7 +86,7 @@ export default function Home() {
       habitats:
         '전국 하천, 계곡, 호수, 저수지 일대, 가까운 연안의 섬 지방, 하천, 호숫가, 물가의 바위구멍이나 나무뿌리 밑', //서식지
       distribution_regions: '유라시아(시베리아 제외), 아프리카(북부 포함), 오스트레일리아·남극 제외 전 대륙', //분포지
-      icus_status_code: 'NT(Near Threatened)', //IUCN 적색목록
+      iucn_status_code: 'NT(Near Threatened)', //IUCN 적색목록
 
       //filter 1
       national_protection_status: ['멸종위기 야생생물', '천연기념물'], //국가 보호종
@@ -103,8 +103,8 @@ export default function Home() {
       latlng: [37.427715, 127.016968], //위도/경도
 
       //filter 2
-      death_date: '2018-01-26', //폐사일자
-      specimen_made_date: '2018-06', // 표본제작일자
+      death_date: '2021-01-08', //폐사일자
+      specimen_made_date: '2021-12', // 표본제작일자
 
       //filter 1
       specimen_made_by: null, //제작자 *nullable
@@ -122,7 +122,7 @@ export default function Home() {
       habitats:
         '전국 하천, 계곡, 호수, 저수지 일대, 가까운 연안의 섬 지방, 하천, 호숫가, 물가의 바위구멍이나 나무뿌리 밑', //서식지
       distribution_regions: '유라시아(시베리아 제외), 아프리카(북부 포함), 오스트레일리아·남극 제외 전 대륙', //분포지
-      icus_status_code: 'NT(Near Threatened)', //IUCN 적색목록
+      iucn_status_code: 'NT(Near Threatened)', //IUCN 적색목록
 
       //filter 1
       national_protection_status: ['멸종위기 야생생물', '천연기념물'], //국가 보호종

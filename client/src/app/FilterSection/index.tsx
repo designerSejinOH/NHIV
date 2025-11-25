@@ -66,7 +66,7 @@ export const FilterSection = ({ currentFilter, setCurrentFilter, className }: Fi
           <span className='text-base font-semibold '>현재 선택된 필터</span>
           <button
             onClick={() => setCurrentFilter(null)}
-            className='w-fit h-fit text-sm leading-none flex flex-row items-center gap-1 px-1 font-semibold hover:opacity-80 active:translate-y-0.5 transition-all cursor-pointer'
+            className='w-fit h-fit text-sm leading-none flex flex-row items-center gap-1 px-2 py-1 rounded-lg font-semibold hover:bg-white  active:translate-y-0.5 transition-all cursor-pointer'
           >
             <RiDeleteBinLine />
             모든 필터 초기화
@@ -84,14 +84,14 @@ export const FilterSection = ({ currentFilter, setCurrentFilter, className }: Fi
               currentFilter.map((filter) => (
                 <div
                   key={filter}
-                  className='snap-start text-sm pl-2 pr-1 py-1 shadow rounded-lg w-fit flex-shrink-0 h-fit flex justify-center items-center bg-white text-[#028261] font-medium'
+                  className='snap-start text-sm pl-2 pr-1 py-1 shadow-[0_2px_4px_rgba(0,0,0,0.2)] rounded-lg w-fit flex-shrink-0 h-fit flex justify-center items-center bg-white text-[#028261] font-medium'
                 >
                   {filter}
                   <div
                     onClick={() => {
                       setCurrentFilter((filters) => filters?.filter((f) => f !== filter) || null)
                     }}
-                    className='ml-2.5 font-semibold hover:opacity-70 active:shadow-none active:translate-y-0.5 transition-all cursor-pointer'
+                    className='ml-2.5 font-semibold hover:opacity-70 active:scale-95 transition-all cursor-pointer'
                   >
                     ×
                   </div>
@@ -135,7 +135,6 @@ export const FilterSection = ({ currentFilter, setCurrentFilter, className }: Fi
       {/* scrollable area */}
       <div className='w-full flex-1 flex flex-col gap-2 overflow-y-auto snap-y no-scroll-bar rounded-lg'>
         <FilterBox
-          className='pb-10'
           title='주요 탐색'
           filters={[
             {
@@ -172,7 +171,6 @@ export const FilterSection = ({ currentFilter, setCurrentFilter, className }: Fi
           setCurrentFilter={setCurrentFilter}
         />
         <FilterBox
-          className='pb-10'
           title='보조 탐색'
           filters={[
             {

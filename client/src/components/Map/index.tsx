@@ -9,20 +9,26 @@ interface MapProps {
   defaultCenter?: { lat: number; lng: number } | null
   defaultZoom?: number
   children?: React.ReactNode
+  onIdle?: (map: google.maps.Map) => void
 }
 
-function MapBase({ defaultCenter, defaultZoom = 10, children }: MapProps) {
-  const { isLoaded } = useGoogleMaps()
-  const mapRef = useRef<google.maps.Map>()
+function MapBase({ defaultCenter, defaultZoom = 10, children, onIdle }: MapProps) {
+   const { isLoaded } = useGoogleMaps()
+   const mapRef = useRef<google.maps.Map>()
 
-  const center = useMemo(() => defaultCenter ?? ({ lat: 37.5665, lng: 126.978 } as const), [defaultCenter])
+   const center = useMemo(() => defaultCenter ?? ({ lat: 37.5665, lng: 126.978 } as const), [defaultCenter])
 
-  const onMapLoad = useCallback((m: google.maps.Map) => {
-    mapRef.current = m
-  }, [])
+   const onMapLoad = useCallback((m: google.maps.Map) => {
+     mapRef.current = m
+   }, [])
+
+   const handleIdle = useCallback(() => {
+     if (!mapRef.current) return
+     onIdle?.(mapRef.current) // 🔥 parent에 map 넘겨줌
+   }, [onIdle])
+
 
   if (!isLoaded) {
-    // 여기에 스피너/플레이스홀더 원하는대로
     return (
       <div
         style={{
@@ -41,10 +47,11 @@ function MapBase({ defaultCenter, defaultZoom = 10, children }: MapProps) {
   return (
     <GoogleMap
       onLoad={onMapLoad}
+      onIdle={handleIdle} // 🔥 여기 연결
       mapContainerStyle={{
         width: '100%',
         height: '100%',
-        outline: 'none', // ⭐ 포커스 아웃라인 제거
+        outline: 'none',
       }}
       center={center}
       zoom={defaultZoom}

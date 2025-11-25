@@ -69,7 +69,7 @@ export const FilterBox = ({ title, filters, currentFilter, setCurrentFilter, cla
 
       <AnimatePresence>
         {isOpen && (
-          <motion.div className='w-full h-fit flex flex-col gap-6'>
+          <motion.div className='w-full h-fit flex flex-col gap-6 pb-6'>
             {filters.map((filter) => {
               // range 타입인 경우 min, max 계산
               let min = 0

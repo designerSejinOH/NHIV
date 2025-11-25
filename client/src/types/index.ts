@@ -28,7 +28,7 @@ export type Specimen = {
   predators: string | null //천적
   habitats: string | null //서식지
   distribution_regions: string | null //분포지
-  icus_status_code: string | null //IUCN 적색목록
+  iucn_status_code: string | null //IUCN 적색목록
 
   //filter 1
   national_protection_status: string[] | null //국가 보호종

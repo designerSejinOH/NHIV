@@ -21,7 +21,7 @@ export const Intro = ({ isPageInfo, setIsPageInfo }: ProjectInfoProps) => {
         transition={{ type: 'tween', duration: 0.3 }}
       >
         <div className='w-fit h-fit flex flex-col items-center justify-center gap-5 mb-36'>
-          <div className='w-fit h-fit pb-6 border-b border-gray-100 flex flex-col gap-4 items-center justify-center'>
+          <div className='w-fit h-fit pb-6 flex flex-col gap-4 items-center justify-center'>
             <span className='text-lg leading-none w-fit h-fit font-normal'>
               한국전통대학교 디지털헤리티지학과 HiLAB
             </span>
@@ -36,7 +36,7 @@ export const Intro = ({ isPageInfo, setIsPageInfo }: ProjectInfoProps) => {
           </div>
           <div
             onClick={() => setIsPageInfo(false)}
-            className='bg-[#3EBA72] text-white leading-none rounded-2xl w-fit h-fit px-6 py-4 justify-center items-center flex flex-row text-xl font-semibold hover:opacity-80 active:scale-95 transition-all cursor-pointer'
+            className='bg-[#3EBA72] shadow-xl text-white leading-none rounded-2xl w-fit h-fit px-6 py-4 justify-center items-center flex flex-row text-xl font-semibold hover:opacity-80 active:shadow-none active:translate-y-0.5 transition-all cursor-pointer'
           >
             지도기반 시각화 바로가기 <FiArrowUpRight className='text-2xl' />
           </div>
