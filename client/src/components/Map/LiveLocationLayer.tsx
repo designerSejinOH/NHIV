@@ -5,6 +5,7 @@ import { CircleF, MarkerF, useGoogleMap } from '@react-google-maps/api'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { GrLocation } from 'react-icons/gr'
+import { FiNavigation } from 'react-icons/fi'
 
 type Tracking = false | 'observe' | 'follow'
 
@@ -65,7 +66,7 @@ export function LiveLocationLayer() {
             style={{
               transformOrigin: 'center',
             }}
-            className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[1] bg-[#028261] font-medium text-white backdrop-blur-md px-3 py-2 w-fit text-sm shadow'
+            className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[1] bg-[#028261] rounded-lg overflow-hidden font-medium text-white px-3 py-2 w-fit text-sm shadow'
           >
             {!loc && (permission === 'prompt' || permission === 'unknown') && (
               <div className=''>위치 권한을 허용해 주세요.</div>
@@ -111,10 +112,9 @@ export function LiveLocationLayer() {
             setTracking('follow')
             map.panTo({ lat: loc.lat, lng: loc.lng })
           }}
-          className='w-full h-fit cursor-pointer flex justify-center items-center bg-[#028261] font-medium text-white pl-2 pr-3 py-2 text-sm shadow md:hover:bg-[#02664f] active:scale-95 transition-all'
+          className='w-full h-fit cursor-pointer flex justify-center rounded-lg overflow-hidden items-center bg-[#028261] font-medium text-white leading-none pl-3 pr-4 py-3 gap-2 text-sm shadow md:hover:bg-[#02664f] active:scale-95 transition-all'
         >
-          <GrLocation className='inline mr-1' />
-          현재 위치로
+          <FiNavigation className='translate-y-[1px]' /> 내 위치로 이동
         </button>
         {/* <button
           onClick={() => setTracking((t) => (t === 'follow' ? 'observe' : 'follow'))}

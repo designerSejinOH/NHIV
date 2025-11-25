@@ -26,7 +26,7 @@
   --aspect-landscape: 16 / 9;
 
   /* color */
-  --color-background: #FEFBF6;
+  --color-background: #FFFFFF;
   --color-primary: #3EBA72;
   --color-secondary: #42C86F;
   --color-tertiary: #9ACF8B;
@@ -173,5 +173,8 @@
     background: #555;
     /* 스크롤바 호버 색상 */
   }
+
+
+
 
 }
