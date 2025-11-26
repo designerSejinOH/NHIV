@@ -122,8 +122,9 @@ export const HeritageModal = ({ specimens, selectedSpeciemen, setSelectedSpeciem
               </div>
 
               {/* 오른쪽 컬럼 */}
-              <div className='col-start-2 flex flex-col gap-2 min-h-0'>
-                <div className='bg-[#028261] rounded-lg overflow-hidden text-white h-fit p-2 flex flex-col gap-2 relative'>
+              <div className='col-start-2 flex flex-col min-h-0'>
+                {/* 헤더 (고정) */}
+                <div className='bg-[#028261] rounded-lg overflow-hidden text-white h-fit p-2 flex flex-col gap-2 relative flex-shrink-0'>
                   <button
                     onClick={() => setSelectedSpeciemen(null)}
                     className='absolute top-0 right-0 p-2 text-white flex items-center justify-center hover:opacity-80 active:scale-95 transition-all cursor-pointer'
@@ -143,88 +144,59 @@ export const HeritageModal = ({ specimens, selectedSpeciemen, setSelectedSpeciem
                   <span className='text-2xl font-bold'>{currentSpecimen.name_kr}</span>
                   <span className='text-base font-medium italic'>{currentSpecimen.name_en}</span>
                 </div>
-                {/* 국가보호 표시 */}
-                <div className=' overflow-hidden h-fit flex flex-col gap-2'>
-                  {currentSpecimen.iucn_status_code && (
-                    <div className='w-full bg-white  rounded-lg h-fit flex flex-row p-2 gap-2 justify-between items-center'>
-                      <div className='w-full h-fit flex flex-col gap-2'>
-                        <span className='text-base font-medium leading-none text-gray-700'>
-                          <AiFillAlert className='inline mr-1 mb-1 text-red-500' />
-                          IUCN 적색목록
-                        </span>
-                        <IUCNStatusBadge status={currentSpecimen.iucn_status_code} />
+
+                {/* 헤더 밑부터 스크롤 영역 */}
+                <div className='flex flex-col gap-2 overflow-y-auto min-h-0 mt-2'>
+                  {/* 국가보호 표시 */}
+                  <div className='flex flex-col gap-2 flex-shrink-0'>
+                    {currentSpecimen.iucn_status_code && (
+                      <div className='w-full bg-white rounded-lg h-fit flex flex-row p-2 gap-2 items-start'>
+                        <div className='w-full flex flex-col gap-2'>
+                          <span className='text-base font-medium leading-none text-gray-700'>
+                            <AiFillAlert className='inline mr-1 mb-1 text-red-500' />
+                            IUCN 적색목록
+                          </span>
+                          <IUCNStatusBadge status={currentSpecimen.iucn_status_code} />
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {currentSpecimen.national_protection_status && (
-                    <div className='w-full bg-white  rounded-lg h-fit flex flex-row p-2 gap-2 justify-between items-center'>
-                      <div className='w-full h-fit flex flex-col gap-2'>
-                        <span className='text-base font-medium leading-none text-gray-700'>
-                          <FaShieldAlt className='inline mr-1 mb-1 text-blue-500' />
-                          국가보호종
-                        </span>
-                        {currentSpecimen.national_protection_status.map((status) => (
-                          <NationalProtectionStatusBadge key={status} status={status} />
-                        ))}
+                    )}
+
+                    {currentSpecimen.national_protection_status && (
+                      <div className='w-full bg-white rounded-lg h-fit flex flex-row p-2 gap-2 items-start'>
+                        <div className='w-full flex flex-col gap-2'>
+                          <span className='text-base font-medium leading-none text-gray-700'>
+                            <FaShieldAlt className='inline mr-1 mb-1 text-blue-500' />
+                            국가보호종
+                          </span>
+
+                          {currentSpecimen.national_protection_status.map((status) => (
+                            <NationalProtectionStatusBadge key={status} status={status} />
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-                {/* 상세정보 표시 */}
-                <div className='bg-white rounded-lg overflow-hidden text-black flex-1 min-h-0 overflow-y-auto p-2'>
-                  <div className='text-lg mb-4 font-semibold'>생물 정보</div>
-                  <div className='mb-2 w-full h-fit flex flex-row gap-2 px-1'>
-                    <span className='font-medium w-1/4 flex-shrink-0'>국명</span>
-                    <span className=''>{currentSpecimen.name_kr}</span>
+                    )}
                   </div>
-                  <div className='mb-2 w-full h-fit flex flex-row gap-2 px-1'>
-                    <span className='font-medium w-1/4 flex-shrink-0'>영명</span>
-                    <span className=''>{currentSpecimen.name_en}</span>
-                  </div>
-                  <div className='mb-2 w-full h-fit flex flex-row gap-2 px-1'>
-                    <span className='font-medium w-1/4 flex-shrink-0'>학명</span>
-                    <span className=''>{currentSpecimen.name_sci}</span>
-                  </div>
-                  <div className='mb-2 w-full h-fit flex flex-row gap-2 px-1'>
-                    <span className='font-medium w-1/4 flex-shrink-0'>분류</span>
-                    <span className=''>{currentSpecimen.class_name}</span>
-                  </div>
-                  <div className='mb-2 w-full h-fit flex flex-row gap-2 px-1'>
-                    <span className='font-medium w-1/4 flex-shrink-0'>수명</span>
-                    <span className=''>{currentSpecimen.lifespan || '-'}</span>
-                  </div>
-                  <div className='mb-2 w-full h-fit flex flex-row gap-2 px-1'>
-                    <span className='font-medium w-1/4 flex-shrink-0'>식성</span>
-                    <span className=''>{currentSpecimen.diets || '-'}</span>
-                  </div>
-                  <div className='mb-2 w-full h-fit flex flex-row gap-2 px-1'>
-                    <span className='font-medium w-1/4 flex-shrink-0'>천적</span>
-                    <span className=''>{currentSpecimen.predators || '-'}</span>
-                  </div>
-                  <div className='mb-2 w-full h-fit flex flex-row gap-2 px-1'>
-                    <span className='font-medium w-1/4 flex-shrink-0'>서식지</span>
-                    <span className=''>{currentSpecimen.habitats || '-'}</span>
-                  </div>
-                  <div className='mb-2 w-full h-fit flex flex-row gap-2 px-1'>
-                    <span className='font-medium w-1/4 flex-shrink-0'>분포지</span>
-                    <span className=''>{currentSpecimen.distribution_regions || '-'}</span>
-                  </div>
-                  <div className='text-lg mt-8 mb-4 font-semibold'>표본 정보</div>
-                  <div className='mb-2 w-full h-fit flex flex-row gap-2 px-1'>
-                    <span className='font-medium w-1/4 flex-shrink-0'>폐사 장소</span>
-                    <span className=''>{currentSpecimen.specimen_location || '-'}</span>
-                  </div>
-                  <div className='mb-2 w-full h-fit flex flex-row gap-2 px-1'>
-                    <span className='font-medium w-1/4 flex-shrink-0'>폐사 일자</span>
-                    <span className=''>{toKoreanDate(currentSpecimen.death_date) || '-'}</span>
-                  </div>
-                  <div className='mb-2 w-full h-fit flex flex-row gap-2 px-1'>
-                    <span className='font-medium w-1/4 flex-shrink-0'>표본 제작 일자</span>
-                    <span className=''>{toKoreanDate(currentSpecimen.specimen_made_date) || '-'}</span>
-                  </div>
-                  <div className='mb-2 w-full h-fit flex flex-row gap-2 px-1'>
-                    <span className='font-medium w-1/4 flex-shrink-0'>표본 제작자</span>
-                    <span className=''>{currentSpecimen.specimen_made_by || '-'}</span>
+
+                  {/* 상세정보 박스 */}
+                  <div className='bg-white rounded-lg text-black px-3 py-2'>
+                    <div className='text-lg mb-4 font-semibold'>생물 정보</div>
+
+                    <InfoRow label='국명' value={currentSpecimen.name_kr} />
+                    <InfoRow label='영명' value={currentSpecimen.name_en} />
+                    <InfoRow label='학명' value={currentSpecimen.name_sci} />
+                    <InfoRow label='분류' value={currentSpecimen.class_name} />
+                    <InfoRow label='수명' value={currentSpecimen.lifespan} />
+                    <InfoRow label='식성' value={currentSpecimen.diets} />
+                    <InfoRow label='천적' value={currentSpecimen.predators} />
+                    <InfoRow label='서식지' value={currentSpecimen.habitats} />
+                    <InfoRow label='분포지' value={currentSpecimen.distribution_regions} />
+
+                    <div className='text-lg mt-8 mb-4 font-semibold'>표본 정보</div>
+
+                    <InfoRow label='폐사 장소' value={currentSpecimen.specimen_location} />
+                    <InfoRow label='폐사 일자' value={toKoreanDate(currentSpecimen.death_date)} />
+                    <InfoRow label='표본 제작 일자' value={toKoreanDate(currentSpecimen.specimen_made_date)} />
+                    <InfoRow label='표본 제작자' value={currentSpecimen.specimen_made_by} />
                   </div>
                 </div>
               </div>
@@ -385,6 +357,21 @@ const NationalProtectionStatusBadge = ({ status }: { status: string }) => {
         <div className='font-medium'>{status}</div>
         <div className='font-normal text-sm'>{infoText}</div>
       </div>
+    </div>
+  )
+}
+
+// components/InfoRow.tsx (또는 같은 파일 상단에 선언해도 됨)
+interface InfoRowProps {
+  label: string
+  value: string | number | null | undefined
+}
+
+export const InfoRow = ({ label, value }: InfoRowProps) => {
+  return (
+    <div className='mb-2 w-full h-fit flex flex-row gap-2 px-1'>
+      <span className='font-medium w-1/4 flex-shrink-0'>{label}</span>
+      <span className='flex-1 break-words'>{value || '-'}</span>
     </div>
   )
 }
