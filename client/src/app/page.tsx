@@ -1,15 +1,24 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Map, Copyright } from '@/components'
 import classNames from 'classnames'
 import { TitleSection } from './TitleSection'
 import { FilterSection } from './FilterSection'
 import { Intro } from './Intro'
 import { MapSection } from './MapSection'
-import { Specimen } from '@/types'
+import { Specimen as S } from '@/types'
+import { supabase } from '@/lib/supabase'
+import type { Specimen } from '@/types/database'
 
 export default function Home() {
+  const [specimensE, setSpecimensE] = useState<Specimen[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchSpecimens()
+  }, [])
+
   const [isPageInfo, setIsPageInfo] = useState(true)
   const [selectedHeritage, setSelectedHeritage] = useState<{
     isSelected: boolean
@@ -18,7 +27,7 @@ export default function Home() {
 
   const [currentFilter, setCurrentFilter] = useState<string[] | null>(null)
 
-  const examples: Specimen[] = [
+  const examples: S[] = [
     {
       no: 1, //No.
       specimen_id: 'SP0017', //Specimen ID
@@ -130,6 +139,27 @@ export default function Home() {
   ]
 
   const specimens = examples
+
+  const fetchSpecimens = async () => {
+    try {
+      const { data, error } = await supabase.from('specimens').select('*').order('no', { ascending: false })
+
+      if (error) throw error
+      setSpecimensE(data || [])
+    } catch (error) {
+      console.error('Error fetching specimens:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className='min-h-screen flex items-center justify-center'>
+        <div className='text-gray-600'>로딩중...</div>
+      </div>
+    )
+  }
 
   return (
     <>
