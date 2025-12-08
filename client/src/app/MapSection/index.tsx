@@ -83,24 +83,30 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
   return (
     <section className={classNames('flex relative', className)}>
       {/* 🔥 맵 모드 표시 */}
-      <div className='absolute left-3 top-3 z-10 flex flex-col gap-1 pointer-events-none'>
-        <div className='inline-flex items-center gap-2 rounded-lg bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1.5'>
-          {['collection', 'death'].map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setMapMode(mode as MapMode)}
+      <div className='absolute top-2 left-1/2 -translate-x-1/2 z-10 w-60 inline-flex items-center gap-2'>
+        {['collection', 'death'].map((mode) => (
+          <button
+            key={mode}
+            onClick={() => setMapMode(mode as MapMode)}
+            className={classNames(
+              'flex-1 w-full pl-3 pr-6 py-2 rounded-md pointer-events-auto shadow-md transition-all cursor-pointer flex items-center justify-center gap-2',
+              mapMode === mode
+                ? 'bg-[#3EBA72] text-white hover:bg-[#36a162] font-semibold '
+                : 'bg-white text-black hover:bg-gray-100 font-medium',
+            )}
+          >
+            <span
               className={classNames(
-                'px-2 py-1 rounded-md pointer-events-auto',
-                mapMode === mode
-                  ? 'bg-emerald-400/90 hover:bg-emerald-400/100 font-semibold'
-                  : 'bg-white/30 hover:bg-white/50 font-normal',
+                'mr-1 inline-block w-2 h-2 bg-white rounded-full',
+                mode === 'collection' ? 'bg-[#3EBA72]' : 'bg-[#FF6B6B]',
               )}
-            >
-              {mode === 'collection' ? '소장처 위치' : '사망 장소 위치'}
-            </button>
-          ))}
-        </div>
-        <div className='inline-flex items-center gap-2 rounded-lg bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1.5'>
+            />
+            {mode === 'collection' ? '소장처' : '발견지'}
+          </button>
+        ))}
+      </div>
+      <div className='absolute left-3 top-3 z-10 flex flex-col gap-2 pointer-events-none rounded-lg bg-white/50 backdrop-blur-sm text-black px-3 py-1.5'>
+        <div className='inline-flex items-center gap-2  text-sm'>
           <span className='font-semibold'>Zoom {zoom.toFixed(1)}</span>
           <span className='text-[10px] opacity-80'>{zoomLabel}</span>
         </div>
@@ -115,7 +121,7 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
                 idx === 1 && 'w-6',
                 idx === 2 && 'w-8',
                 idx === 3 && 'w-10',
-                zoom >= level ? 'bg-emerald-400' : 'bg-white/30',
+                zoom >= level ? 'bg-[#3EBA72]' : 'bg-black/30',
               )}
             />
           ))}
