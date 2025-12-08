@@ -15,14 +15,18 @@ export default function FileUpload({ currentUrl, onUploadSuccess, disabled }: Fi
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
+      console.log('📤 Upload started...')
       setUploadError('')
       setUploading(true)
 
       if (!e.target.files || e.target.files.length === 0) {
+        console.log('❌ No file selected')
+        setUploading(false)
         return
       }
 
       const file = e.target.files[0]
+      console.log('📁 File:', file.name, file.size, 'bytes')
 
       // 파일 형식 검증 (3D 모델 형식)
       const allowedExtensions = ['.glb', '.gltf', '.obj', '.fbx', '.usdz']
@@ -30,6 +34,7 @@ export default function FileUpload({ currentUrl, onUploadSuccess, disabled }: Fi
 
       if (!allowedExtensions.includes(fileExtension)) {
         setUploadError('지원하는 3D 모델 형식: .glb, .gltf, .obj, .fbx, .usdz')
+        setUploading(false)
         return
       }
 
@@ -37,6 +42,7 @@ export default function FileUpload({ currentUrl, onUploadSuccess, disabled }: Fi
       const maxSize = 50 * 1024 * 1024 // 50MB
       if (file.size > maxSize) {
         setUploadError('파일 크기는 50MB를 초과할 수 없습니다.')
+        setUploading(false)
         return
       }
 
@@ -46,22 +52,35 @@ export default function FileUpload({ currentUrl, onUploadSuccess, disabled }: Fi
       const fileName = `${timestamp}-${randomStr}${fileExtension}`
       const filePath = `models/${fileName}`
 
+      console.log('📝 File path:', filePath)
+
       // Supabase Storage에 업로드
+      console.log('⬆️ Uploading to Supabase...')
       const { data, error } = await supabase.storage.from('specimen-models').upload(filePath, file, {
         cacheControl: '3600',
         upsert: false,
       })
 
       if (error) {
+        console.error('❌ Upload error:', error)
         throw error
       }
 
-      // Public URL 생성
-      const { data: publicUrlData } = supabase.storage.from('specimen-models').getPublicUrl(filePath)
+      console.log('✅ Upload successful:', data)
 
-      onUploadSuccess(publicUrlData.publicUrl)
+      // Public URL 생성 (수정된 부분)
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('specimen-models').getPublicUrl(filePath)
+
+      console.log('🔗 Public URL:', publicUrl)
+
+      onUploadSuccess(publicUrl)
+
+      // 입력 필드 초기화
+      e.target.value = ''
     } catch (error: any) {
-      console.error('Upload error:', error)
+      console.error('💥 Upload failed:', error)
       setUploadError(error.message || '파일 업로드 중 오류가 발생했습니다.')
     } finally {
       setUploading(false)
@@ -73,22 +92,33 @@ export default function FileUpload({ currentUrl, onUploadSuccess, disabled }: Fi
 
     try {
       setUploading(true)
+      console.log('🗑️ Deleting:', currentUrl)
 
       // URL에서 파일 경로 추출
       const url = new URL(currentUrl)
       const pathParts = url.pathname.split('/')
-      const filePath = pathParts.slice(pathParts.indexOf('models')).join('/')
+
+      // 'specimen-models' 다음부터가 실제 파일 경로
+      const bucketIndex = pathParts.findIndex((part) => part === 'specimen-models')
+      if (bucketIndex === -1) {
+        throw new Error('Invalid URL format')
+      }
+
+      const filePath = pathParts.slice(bucketIndex + 1).join('/')
+      console.log('📍 File path:', filePath)
 
       // Storage에서 파일 삭제
       const { error } = await supabase.storage.from('specimen-models').remove([filePath])
 
       if (error) {
+        console.error('❌ Delete error:', error)
         throw error
       }
 
+      console.log('✅ Deleted')
       onUploadSuccess('')
     } catch (error: any) {
-      console.error('Delete error:', error)
+      console.error('💥 Delete failed:', error)
       setUploadError('파일 삭제 중 오류가 발생했습니다.')
     } finally {
       setUploading(false)
@@ -125,9 +155,9 @@ export default function FileUpload({ currentUrl, onUploadSuccess, disabled }: Fi
         )}
       </div>
 
-      {uploading && <p className='text-sm text-blue-600'>업로드 중...</p>}
+      {uploading && <p className='text-sm text-blue-600'>⏳ 업로드 중...</p>}
 
-      {uploadError && <p className='text-sm text-red-600'>{uploadError}</p>}
+      {uploadError && <p className='text-sm text-red-600'>❌ {uploadError}</p>}
 
       {currentUrl && !uploading && (
         <div className='text-sm'>

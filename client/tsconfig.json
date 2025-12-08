@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -24,15 +20,9 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "icons": [
-        "public/icons"
-      ],
-      "img": [
-        "public/img"
-      ]
+      "@/*": ["./src/*", "public/*"],
+      "icons": ["public/icons"],
+      "img": ["public/img"]
     }
   },
   "include": [
@@ -44,10 +34,6 @@
     "**/*.mts",
     "next.config.js"
   ],
-  "exclude": [
-    "node_modules"
-  ],
-  "types": [
-    "@react-three/fiber"
-  ] // React Three Fiber 타입 추가
+  "exclude": ["node_modules"],
+  "types": ["@react-three/fiber"] // React Three Fiber 타입 추가
 }

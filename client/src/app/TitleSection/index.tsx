@@ -12,16 +12,11 @@ export const TitleSection = ({ className }: { className?: string }) => {
       )}
     >
       {/* 타이틀/설명 등 */}
-      <h1 className='text-base md:text-lg lg:text-lg xl:text-xl font-bold leading-tight'>
-        자연유산 DB
-        <br />
-        지도기반시각화
-      </h1>
-
-      <h3 className='text-base font-normal leading-tight'>
-        디지털 박물관 서비스를 위한 AI 기반 <br />
-        네이처 복원 기술 개발
-      </h3>
+      <span className='text-2xl md:text-3xl lg:text-3xl xl:text-4xl font-bold leading-none'>NHIV</span>
+      <span className='text-sm md:text-base font-normal leading-tight'>
+        Natural Heritage map-based Information Visualization
+      </span>
+      <span className='text-lg md:text-xl font-medium leading-tight'>자연유산DB 지도기반 시각화</span>
     </section>
   )
 }

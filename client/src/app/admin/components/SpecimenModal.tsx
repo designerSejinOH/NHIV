@@ -122,19 +122,16 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
         const parts = specimen.death_date.split('-')
 
         if (parts.length === 3) {
-          // YYYY-MM-DD
           setDeathYear(parts[0] || '')
           setDeathMonth(parts[1] || '')
           setDeathDay(parts[2] || '')
           setDeathDateType('full')
         } else if (parts.length === 2) {
-          // YYYY-MM
           setDeathYear(parts[0] || '')
           setDeathMonth(parts[1] || '')
           setDeathDay('')
           setDeathDateType('month')
         } else {
-          // 예상치 못한 형식 방어 코드
           setDeathYear('')
           setDeathMonth('')
           setDeathDay('')
@@ -147,7 +144,7 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
         setDeathDateType('full')
       }
 
-      // 제작 날짜 파싱도 같은 방식
+      // 제작 날짜 파싱
       if (specimen.made_date) {
         const parts = specimen.made_date.split('-')
 
@@ -200,6 +197,7 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
     setMadeYear('')
     setMadeMonth('')
     setMadeDay('')
+    setMadeBy('')
     setSpeciesId('')
     setLifespan('')
     setDiets('')
@@ -208,6 +206,7 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
     setDistributionRegions('')
     setIucnStatusId('')
     setProtectionTypeIds([])
+    setUploadedFiles([])
   }
 
   const fetchReferenceData = async () => {
@@ -247,9 +246,11 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
       try {
         const urlObj = new URL(url)
         const pathParts = urlObj.pathname.split('/')
-        const filePath = pathParts.slice(pathParts.indexOf('models')).join('/')
-
-        await supabase.storage.from('specimen-models').remove([filePath])
+        const bucketIndex = pathParts.findIndex((part) => part === 'specimen-models')
+        if (bucketIndex !== -1) {
+          const filePath = pathParts.slice(bucketIndex + 1).join('/')
+          await supabase.storage.from('specimen-models').remove([filePath])
+        }
       } catch (error) {
         console.error('Failed to cleanup file:', error)
       }
@@ -301,10 +302,8 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
     let deathDate: string | null = null
     if (deathYear && deathMonth) {
       if (deathDateType === 'full' && deathDay) {
-        // 전체 날짜
         deathDate = `${deathYear}-${deathMonth.padStart(2, '0')}-${deathDay.padStart(2, '0')}`
       } else if (deathDateType === 'month') {
-        // 년/월만
         deathDate = `${deathYear}-${deathMonth.padStart(2, '0')}`
       }
     }
@@ -360,17 +359,19 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
       const data = await response.json()
 
       if (response.ok) {
-        // 성공하면 업로드된 파일 목록 초기화 (삭제하지 않음)
+        // ✅ 성공: 업로드된 파일 목록만 초기화 (삭제하지 않음)
         setUploadedFiles([])
 
-        // 기존 파일이 있고, 새 파일로 교체된 경우 기존 파일 삭제
+        // 기존 파일이 있고, 새 파일로 교체된 경우에만 기존 파일 삭제
         if (isEditMode && originalModelUrl && originalModelUrl !== modelUrl && modelUrl) {
           try {
             const urlObj = new URL(originalModelUrl)
             const pathParts = urlObj.pathname.split('/')
-            const filePath = pathParts.slice(pathParts.indexOf('models')).join('/')
-
-            await supabase.storage.from('specimen-models').remove([filePath])
+            const bucketIndex = pathParts.findIndex((part) => part === 'specimen-models')
+            if (bucketIndex !== -1) {
+              const filePath = pathParts.slice(bucketIndex + 1).join('/')
+              await supabase.storage.from('specimen-models').remove([filePath])
+            }
           } catch (error) {
             console.error('Failed to delete old file:', error)
           }
@@ -379,7 +380,12 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
         setSuccess(isEditMode ? '표본이 수정되었습니다.' : '표본이 추가되었습니다.')
         setTimeout(() => {
           onSuccess()
-          handleClose()
+          // ✅ 성공 시에는 cleanup 하지 않고 바로 닫기
+          resetForm()
+          setError('')
+          setSuccess('')
+          setActiveTab('basic')
+          onClose()
         }, 1000)
       } else {
         setError(data.error || '오류가 발생했습니다.')
@@ -392,7 +398,7 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
   }
 
   const handleClose = async () => {
-    // 저장하지 않고 닫을 때 새로 업로드된 파일들 삭제
+    // ⚠️ 저장하지 않고 닫을 때만 새로 업로드된 파일들 삭제
     if (uploadedFiles.length > 0) {
       await cleanupUploadedFiles()
     }

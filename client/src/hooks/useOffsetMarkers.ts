@@ -1,5 +1,6 @@
+// hooks/useOffsetMarkers.ts
 import { useMemo } from 'react'
-import { Specimen } from '@/types'
+import { SpecimenWithCollection } from '@/types/database'
 
 // 같은 위치에 있는 핀들을 원형으로 흩뿌리는 함수
 const getOffsetLatLng = (baseLat: number, baseLng: number, index: number, total: number) => {
@@ -20,25 +21,28 @@ const getOffsetLatLng = (baseLat: number, baseLng: number, index: number, total:
   }
 }
 
-export const useOffsetMarkers = (specimens: Specimen[] | undefined) => {
+export const useOffsetMarkers = (specimens: SpecimenWithCollection[] | undefined) => {
   return useMemo(() => {
     if (!specimens) return []
 
+    // latlng가 있는 specimens만 필터링
+    const validSpecimens = specimens.filter((s) => s.latlng && s.latlng.length === 2)
+
     // 1) 좌표 기준으로 그룹핑
-    const grouped = specimens.reduce(
+    const grouped = validSpecimens.reduce(
       (acc, item) => {
-        const key = `${item.latlng[0]}-${item.latlng[1]}`
+        const key = `${item.latlng![0]}-${item.latlng![1]}`
         if (!acc[key]) acc[key] = []
         acc[key].push(item)
         return acc
       },
-      {} as Record<string, Specimen[]>,
+      {} as Record<string, SpecimenWithCollection[]>,
     )
 
     // 2) offset lat/lng 계산해서 펼쳐진 배열 리턴
     const result = Object.values(grouped).flatMap((group) => {
       const total = group.length
-      const [baseLat, baseLng] = group[0].latlng
+      const [baseLat, baseLng] = group[0].latlng!
 
       return group.map((item, index) => {
         const offset = getOffsetLatLng(baseLat, baseLng, index, total)

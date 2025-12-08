@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import SpecimenModal from '../components/SpecimenModal'
+import DuplicateSpecimenModal from '../components/DuplicateSpecimenModal'
 import type { Specimen } from '@/types/database'
+import { useSearchParams, useRouter } from 'next/navigation'
 
 interface SpecimenWithRelations extends Specimen {
   species?: {
@@ -23,11 +25,30 @@ export default function SpecimensPage() {
   const [specimens, setSpecimens] = useState<SpecimenWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false)
   const [selectedSpecimen, setSelectedSpecimen] = useState<Specimen | null>(null)
+  const [duplicateTarget, setDuplicateTarget] = useState<{ no: number; specimen_id: string } | null>(null)
+
+  const searchParams = useSearchParams()
+  const router = useRouter()
 
   useEffect(() => {
     fetchSpecimens()
   }, [])
+
+  // 쿼리 파라미터 확인하여 모달 열기
+  useEffect(() => {
+    const editNo = searchParams.get('edit')
+    if (editNo && specimens.length > 0) {
+      const specimenToEdit = specimens.find((s) => s.no === parseInt(editNo))
+      if (specimenToEdit) {
+        setSelectedSpecimen(specimenToEdit)
+        setIsModalOpen(true)
+        // URL에서 쿼리 파라미터 제거
+        router.replace('/admin/specimens', { scroll: false })
+      }
+    }
+  }, [searchParams, specimens, router])
 
   const fetchSpecimens = async () => {
     try {
@@ -68,6 +89,11 @@ export default function SpecimensPage() {
   const handleEdit = (specimen: Specimen) => {
     setSelectedSpecimen(specimen)
     setIsModalOpen(true)
+  }
+
+  const handleDuplicate = (no: number, specimenId: string) => {
+    setDuplicateTarget({ no, specimen_id: specimenId })
+    setIsDuplicateModalOpen(true)
   }
 
   const handleDelete = async (no: number, specimenId: string) => {
@@ -141,8 +167,14 @@ export default function SpecimensPage() {
                       {item.iucn_statuses ? <span className='font-bold'>{item.iucn_statuses.code}</span> : '-'}
                     </td>
                     <td className='px-6 py-4 whitespace-nowrap text-sm'>
-                      <button onClick={() => handleEdit(item)} className='text-blue-600 hover:text-blue-900 mr-4'>
+                      <button onClick={() => handleEdit(item)} className='text-blue-600 hover:text-blue-900 mr-3'>
                         수정
+                      </button>
+                      <button
+                        onClick={() => handleDuplicate(item.no, item.specimen_id)}
+                        className='text-green-600 hover:text-green-900 mr-3'
+                      >
+                        복제
                       </button>
                       <button
                         onClick={() => handleDelete(item.no, item.specimen_id)}
@@ -165,6 +197,19 @@ export default function SpecimensPage() {
         onSuccess={handleModalSuccess}
         specimen={selectedSpecimen}
       />
+
+      {duplicateTarget && (
+        <DuplicateSpecimenModal
+          isOpen={isDuplicateModalOpen}
+          onClose={() => {
+            setIsDuplicateModalOpen(false)
+            setDuplicateTarget(null)
+          }}
+          onSuccess={handleModalSuccess}
+          originalNo={duplicateTarget.no}
+          originalSpecimenId={duplicateTarget.specimen_id}
+        />
+      )}
     </div>
   )
 }

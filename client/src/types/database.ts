@@ -1,3 +1,5 @@
+// types/database.ts
+
 export interface AdminUser {
   id: number
   username: string
@@ -28,4 +30,13 @@ export interface Specimen {
   protection_type_ids: number[] | null
   created_at: string
   updated_at: string
+}
+
+export interface SpecimenWithCollection extends Specimen {
+  collections?: {
+    latitude: number | null
+    longitude: number | null
+    institution_name: string
+  }
+  latlng?: [number, number] // 동적으로 추가되는 필드
 }

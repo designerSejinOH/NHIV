@@ -1,7 +1,7 @@
 // hooks/useClusteredSpecimens.ts
 import { useMemo } from 'react'
 import Supercluster from 'supercluster'
-import { Specimen } from '@/types'
+import type { SpecimenWithCollection } from '@/types/database'
 
 type Bounds = {
   north: number
@@ -20,7 +20,7 @@ type ClusterPoint = {
 
 type MarkerPoint = {
   type: 'marker'
-  specimen: Specimen
+  specimen: SpecimenWithCollection
   lat: number
   lng: number
 }
@@ -28,19 +28,22 @@ type MarkerPoint = {
 export type ClusterOrMarker = ClusterPoint | MarkerPoint
 
 export const useClusteredSpecimens = (
-  specimens: Specimen[] | undefined,
+  specimens: SpecimenWithCollection[] | undefined,
   bounds: Bounds | null,
   zoom: number,
 ): ClusterOrMarker[] => {
   return useMemo(() => {
     if (!specimens || !bounds) return []
 
-    const points = specimens.map((s) => ({
+    // latlng가 있는 specimens만 필터링
+    const validSpecimens = specimens.filter((s) => s.latlng && s.latlng.length === 2)
+
+    const points = validSpecimens.map((s) => ({
       type: 'Feature' as const,
       properties: { specimen: s },
       geometry: {
         type: 'Point' as const,
-        coordinates: [s.latlng[1], s.latlng[0]], // [lng, lat]
+        coordinates: [s.latlng![1], s.latlng![0]], // [lng, lat]
       },
     }))
 
@@ -66,7 +69,7 @@ export const useClusteredSpecimens = (
 
       return {
         type: 'marker',
-        specimen: c.properties.specimen as Specimen,
+        specimen: c.properties.specimen as SpecimenWithCollection,
         lat,
         lng,
       }

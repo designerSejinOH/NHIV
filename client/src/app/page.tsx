@@ -7,145 +7,82 @@ import { TitleSection } from './TitleSection'
 import { FilterSection } from './FilterSection'
 import { Intro } from './Intro'
 import { MapSection } from './MapSection'
-import { Specimen as S } from '@/types'
 import { supabase } from '@/lib/supabase'
-import type { Specimen } from '@/types/database'
+import type { SpecimenWithCollection } from '@/types/database'
+import { AnimatePresence, motion } from 'framer-motion'
 
 export default function Home() {
-  const [specimensE, setSpecimensE] = useState<Specimen[]>([])
+  const [specimens, setSpecimens] = useState<SpecimenWithCollection[]>([])
   const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchSpecimens()
-  }, [])
-
+  const [hideTab, setHideTab] = useState(false)
   const [isPageInfo, setIsPageInfo] = useState(true)
   const [selectedHeritage, setSelectedHeritage] = useState<{
     isSelected: boolean
     data: any
   } | null>(null)
-
   const [currentFilter, setCurrentFilter] = useState<string[] | null>(null)
 
-  const examples: S[] = [
-    {
-      no: 1, //No.
-      specimen_id: 'SP0017', //Specimen ID
-      sex_growth: '수 / 성체', //표본정보 (성별/성장단계)
-      size: null, //크기(단위)
-      model_url: '/data/SP0017.glb', //3D 모델 URL
-
-      //filter 1
-      specimen_location: '경기도 과천시 대공원광장로 102 서울대공원', //폐사장소 or 소장처
-      latlng: [37.427715, 127.016968], //위도/경도
-
-      //filter 2
-      death_date: '2018-01-26', //폐사일자
-      specimen_made_date: '2018-06', // 표본제작일자
-
-      //filter 1
-      specimen_made_by: null, //제작자 *nullable
-
-      name_kr: '수달', //국문명칭 (Korean)
-      name_en: 'Common Otter', //영문명칭 (English)
-      name_sci: 'Lutra lutra', //학명
-
-      //filter 1
-      class_name: '포유류 (포유동물강, Mammalia)', //분류
-
-      lifespan: null, //수명
-      diets: '물고기, 양서류, 갑각류, 조류 등', //식성
-      predators: null, //천적
-      habitats:
-        '전국 하천, 계곡, 호수, 저수지 일대, 가까운 연안의 섬 지방, 하천, 호숫가, 물가의 바위구멍이나 나무뿌리 밑', //서식지
-      distribution_regions: '유라시아(시베리아 제외), 아프리카(북부 포함), 오스트레일리아·남극 제외 전 대륙', //분포지
-      iucn_status_code: 'NT(Near Threatened)', //IUCN 적색목록
-
-      //filter 1
-      national_protection_status: ['멸종위기 야생생물', '천연기념물'], //국가 보호종
-    },
-    {
-      no: 2, //No.
-      specimen_id: 'SP0018', //Specimen ID
-      sex_growth: '수 / 성체', //표본정보 (성별/성장단계)
-      size: null, //크기(단위)
-      model_url: '/data/SP0018.glb', //3D 모델 URL
-
-      //filter 1
-      specimen_location: '경기도 과천시 대공원광장로 102 서울대공원', //폐사장소 or 소장처
-      latlng: [37.427715, 127.016968], //위도/경도
-
-      //filter 2
-      death_date: '2019-01-28', //폐사일자
-      specimen_made_date: '2019-07', // 표본제작일자
-
-      //filter 1
-      specimen_made_by: null, //제작자 *nullable
-
-      name_kr: '수달', //국문명칭 (Korean)
-      name_en: 'Common Otter', //영문명칭 (English)
-      name_sci: 'Lutra lutra', //학명
-
-      //filter 1
-      class_name: '포유류 (포유동물강, Mammalia)', //분류
-
-      lifespan: null, //수명
-      diets: '물고기, 양서류, 갑각류, 조류 등', //식성
-      predators: null, //천적
-      habitats:
-        '전국 하천, 계곡, 호수, 저수지 일대, 가까운 연안의 섬 지방, 하천, 호숫가, 물가의 바위구멍이나 나무뿌리 밑', //서식지
-      distribution_regions: '유라시아(시베리아 제외), 아프리카(북부 포함), 오스트레일리아·남극 제외 전 대륙', //분포지
-      iucn_status_code: 'NT(Near Threatened)', //IUCN 적색목록
-
-      //filter 1
-      national_protection_status: ['멸종위기 야생생물', '천연기념물'], //국가 보호종
-    },
-    {
-      no: 3, //No.
-      specimen_id: 'SP0019', //Specimen ID
-      sex_growth: '수 / 성체', //표본정보 (성별/성장단계)
-      size: null, //크기(단위)
-      model_url: '/data/SP0019.glb', //3D 모델 URL
-
-      //filter 1
-      specimen_location: '경기도 과천시 대공원광장로 102 서울대공원', //폐사장소 or 소장처
-      latlng: [37.427715, 127.016968], //위도/경도
-
-      //filter 2
-      death_date: '2021-01-08', //폐사일자
-      specimen_made_date: '2021-12', // 표본제작일자
-
-      //filter 1
-      specimen_made_by: null, //제작자 *nullable
-
-      name_kr: '수달', //국문명칭 (Korean)
-      name_en: 'Common Otter', //영문명칭 (English)
-      name_sci: 'Lutra lutra', //학명
-
-      //filter 1
-      class_name: '포유류 (포유동물강, Mammalia)', //분류
-
-      lifespan: null, //수명
-      diets: '물고기, 양서류, 갑각류, 조류 등', //식성
-      predators: null, //천적
-      habitats:
-        '전국 하천, 계곡, 호수, 저수지 일대, 가까운 연안의 섬 지방, 하천, 호숫가, 물가의 바위구멍이나 나무뿌리 밑', //서식지
-      distribution_regions: '유라시아(시베리아 제외), 아프리카(북부 포함), 오스트레일리아·남극 제외 전 대륙', //분포지
-      iucn_status_code: 'NT(Near Threatened)', //IUCN 적색목록
-
-      //filter 1
-      national_protection_status: ['멸종위기 야생생물', '천연기념물'], //국가 보호종
-    },
-  ]
-
-  const specimens = examples
+  useEffect(() => {
+    fetchSpecimens()
+  }, [])
 
   const fetchSpecimens = async () => {
     try {
-      const { data, error } = await supabase.from('specimens').select('*').order('no', { ascending: false })
+      const { data: specimens, error } = await supabase
+        .from('specimens')
+        .select(
+          `
+        *,
+        species (
+          name_kr,
+          name_en,
+          name_sci,
+          classifications (
+            name
+          )
+        ),
+        collections (
+          institution_name,
+          latitude,
+          longitude
+        ),
+        iucn_statuses (
+          code,
+          name_kr,
+          name_en
+        )
+      `,
+        )
+        .order('no', { ascending: false })
 
       if (error) throw error
-      setSpecimensE(data || [])
+
+      // 보호종 이름 추가
+      const specimensWithProtection = await Promise.all(
+        (specimens || []).map(async (specimen) => {
+          // classifications를 최상위로 올림
+          const flattenedSpecimen = {
+            ...specimen,
+            classifications: specimen.species?.classifications || null,
+          }
+
+          if (specimen.protection_type_ids && specimen.protection_type_ids.length > 0) {
+            const { data: protectionTypes } = await supabase
+              .from('protection_types')
+              .select('name')
+              .in('id', specimen.protection_type_ids)
+
+            return {
+              ...flattenedSpecimen,
+              protection_types: protectionTypes?.map((p) => p.name) || [],
+            }
+          }
+          return { ...flattenedSpecimen, protection_types: [] }
+        }),
+      )
+
+      setSpecimens(specimensWithProtection)
+      console.log(specimensWithProtection)
     } catch (error) {
       console.error('Error fetching specimens:', error)
     } finally {
@@ -165,18 +102,52 @@ export default function Home() {
     <>
       {isPageInfo && <Intro isPageInfo={isPageInfo} setIsPageInfo={setIsPageInfo} />}
       <div className='w-full h-dvh flex flex-col gap-0 break-keep overflow-hidden'>
-        <div className='flex-1 w-full grid grid-cols-[minmax(20vw,1fr)_3fr] grid-rows-[auto_1fr] p-2 gap-2 min-h-0'>
-          {/* 페이지 타이틀 영역 - 좌상단 */}
-          <TitleSection className='col-start-1 row-start-1 shadow-md rounded-lg overflow-hidden' />
-          {/* 필터/3D 영역 - 좌하단 */}
-          <FilterSection
-            className='col-start-1 row-start-2 rounded-lg shadow-md overflow-hidden'
-            currentFilter={currentFilter}
-            setCurrentFilter={setCurrentFilter}
-          />
+        <div className={classNames('flex-1 w-full h-full flex flex-row p-2 overflow-hidden')}>
+          <div className={classNames('h-full relative')}>
+            <motion.div
+              initial={{ width: hideTab ? '0' : '25vw', paddingRight: '0.5rem' }}
+              animate={{
+                width: hideTab ? '0' : '25vw',
+                paddingRight: hideTab ? '0rem' : '0.5rem',
+              }}
+              transition={{ duration: 0.3 }}
+              className={classNames('h-full flex flex-col gap-2')}
+            >
+              {/* 페이지 타이틀 영역 - 좌상단 */}
+              <TitleSection className='w-full h-fit flex-shrink-0 shadow-md rounded-lg overflow-hidden' />
+              {/* 필터/3D 영역 - 좌하단 */}
+              <FilterSection
+                className='w-full h-full rounded-lg shadow-md overflow-hidden'
+                currentFilter={currentFilter}
+                setCurrentFilter={setCurrentFilter}
+              />
+            </motion.div>
+
+            <button
+              style={{
+                boxShadow: '4px 0 6px 0 rgba(0,0,0,0.1)',
+              }}
+              className='absolute -right-11 w-12 h-12 rounded-r-xl bg-white text-[#028261] top-1/2 -translate-y-1/2 flex items-center justify-center z-20 cursor-pointer hover:bg-gray-100 active:scale-95 transition-all'
+              onClick={() => setHideTab(!hideTab)}
+            >
+              <motion.svg
+                xmlns='http://www.w3.org/2000/svg'
+                fill='none'
+                viewBox='0 0 24 24'
+                strokeWidth={2}
+                stroke='currentColor'
+                className={classNames('w-6 h-6')}
+                initial={{ rotate: !hideTab ? 180 : 0 }}
+                animate={{ rotate: !hideTab ? 180 : 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <path strokeLinecap='round' strokeLinejoin='round' d='M8.25 4.5l7.5 7.5-7.5 7.5' />
+              </motion.svg>
+            </button>
+          </div>
           {/* 맵 - 오른쪽 전체 */}
           <MapSection
-            className='col-start-2 row-span-2 rounded-lg shadow-md overflow-hidden'
+            className='w-full flex rounded-lg shadow-md overflow-hidden'
             selectedHeritage={selectedHeritage}
             setSelectedHeritage={setSelectedHeritage}
             specimens={specimens}

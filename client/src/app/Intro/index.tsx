@@ -2,7 +2,8 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { FiArrowUpRight } from 'react-icons/fi'
-
+import KnnhLogo from '@/img/knnh_logo.svg'
+import HiLabLogo from '@/img/hilab_logo.svg'
 interface ProjectInfoProps {
   isPageInfo: boolean
   setIsPageInfo: (value: boolean) => void
@@ -22,24 +23,28 @@ export const Intro = ({ isPageInfo, setIsPageInfo }: ProjectInfoProps) => {
       >
         <div className='w-fit h-fit flex flex-col items-center justify-center gap-5 mb-36'>
           <div className='w-fit h-fit pb-6 flex flex-col gap-4 items-center justify-center'>
-            <span className='text-lg leading-none w-fit h-fit font-normal'>
+            <span className='text-base leading-none w-fit h-fit font-normal'>
               한국전통대학교 디지털헤리티지학과 HiLAB
             </span>
-            <span className='text-4xl font-bold text-center leading-tight w-fit h-fit'>
-              자연유산 DB
+            <span className='text-3xl font-bold text-center leading-snug w-fit h-fit'>
+              네이처 에셋 기반
               <br />
-              지도기반시각화
+              자연유산 디지털 아카이브
             </span>
             <span className='text-xl font-medium leading-tight w-fit h-fit'>
               디지털 박물관 서비스를 위한 AI 기반 네이처 복원 기술 개발
             </span>
+            <div className='inline-flex mt-4 h-16 gap-12 justify-center items-center'>
+              <KnnhLogo className='h-[70%] w-auto' />
+              <HiLabLogo className='h-full w-auto' />
+            </div>
           </div>
-          <div
+          <button
             onClick={() => setIsPageInfo(false)}
             className='bg-[#3EBA72] shadow-xl text-white leading-none rounded-2xl w-fit h-fit px-6 py-4 justify-center items-center flex flex-row text-xl font-semibold hover:opacity-80 active:shadow-none active:translate-y-0.5 transition-all cursor-pointer'
           >
             지도기반 시각화 바로가기 <FiArrowUpRight className='text-2xl' />
-          </div>
+          </button>
         </div>
 
         {/* <h3 className='text-xl font-semibold mt-16'>지도기반 시각화 배경</h3>
