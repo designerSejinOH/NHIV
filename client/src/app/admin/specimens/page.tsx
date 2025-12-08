@@ -100,9 +100,60 @@ export default function SpecimensPage() {
     if (!confirm(`정말 표본 "${specimenId}"를 삭제하시겠습니까?`)) return
 
     try {
+      console.log('🗑️ Starting deletion for specimen:', specimenId)
+
+      // 1. 삭제할 표본의 파일 URL 먼저 조회
+      const { data: specimenToDelete } = await supabase.from('specimens').select('model_url').eq('no', no).single()
+
+      console.log('📋 Specimen data:', specimenToDelete)
+
+      // 2. 표본 삭제
       const { error } = await supabase.from('specimens').delete().eq('no', no)
 
       if (error) throw error
+      console.log('✅ Specimen deleted from database')
+
+      // 3. 파일이 있으면 삭제 시도
+      if (specimenToDelete?.model_url) {
+        try {
+          console.log('🔍 Checking if file is used by other specimens...')
+
+          // ✅ 다른 표본이 같은 파일을 사용하는지 확인
+          const { data: otherSpecimens } = await supabase
+            .from('specimens')
+            .select('no')
+            .eq('model_url', specimenToDelete.model_url)
+
+          console.log('📊 Other specimens using this file:', otherSpecimens?.length || 0)
+
+          // 다른 표본이 사용하지 않으면 파일 삭제
+          if (!otherSpecimens || otherSpecimens.length === 0) {
+            const url = new URL(specimenToDelete.model_url)
+            const pathParts = url.pathname.split('/')
+            const bucketIndex = pathParts.findIndex((part) => part === 'specimen-models')
+
+            if (bucketIndex !== -1) {
+              const filePath = pathParts.slice(bucketIndex + 1).join('/')
+              console.log('🗑️ Deleting file:', filePath)
+
+              const { error: deleteFileError } = await supabase.storage.from('specimen-models').remove([filePath])
+
+              if (deleteFileError) {
+                console.error('❌ Failed to delete file:', deleteFileError)
+              } else {
+                console.log('✅ File deleted successfully')
+              }
+            }
+          } else {
+            console.log('⚠️ File is used by other specimens, keeping file')
+          }
+        } catch (fileError) {
+          console.error('⚠️ Error handling file deletion:', fileError)
+          // 파일 삭제 실패는 무시 (표본은 이미 삭제됨)
+        }
+      } else {
+        console.log('ℹ️ No file to delete')
+      }
 
       alert('표본이 삭제되었습니다.')
       fetchSpecimens()

@@ -244,11 +244,21 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
   const cleanupUploadedFiles = async () => {
     for (const url of uploadedFiles) {
       try {
+        // ✅ 다른 표본이 사용 중인 파일인지 확인
+        const { data: existingSpecimens } = await supabase.from('specimens').select('no').eq('model_url', url)
+
+        // 다른 표본이 사용 중이면 삭제하지 않음
+        if (existingSpecimens && existingSpecimens.length > 0) {
+          console.log(`⚠️ File ${url} is used by specimens, skipping deletion`)
+          continue
+        }
+
         const urlObj = new URL(url)
         const pathParts = urlObj.pathname.split('/')
         const bucketIndex = pathParts.findIndex((part) => part === 'specimen-models')
         if (bucketIndex !== -1) {
           const filePath = pathParts.slice(bucketIndex + 1).join('/')
+          console.log('🗑️ Deleting unused file:', filePath)
           await supabase.storage.from('specimen-models').remove([filePath])
         }
       } catch (error) {
@@ -365,12 +375,26 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
         // 기존 파일이 있고, 새 파일로 교체된 경우에만 기존 파일 삭제
         if (isEditMode && originalModelUrl && originalModelUrl !== modelUrl && modelUrl) {
           try {
-            const urlObj = new URL(originalModelUrl)
-            const pathParts = urlObj.pathname.split('/')
-            const bucketIndex = pathParts.findIndex((part) => part === 'specimen-models')
-            if (bucketIndex !== -1) {
-              const filePath = pathParts.slice(bucketIndex + 1).join('/')
-              await supabase.storage.from('specimen-models').remove([filePath])
+            // ✅ 추가 안전장치: 다른 표본이 이 파일을 사용 중인지 확인
+            const { data: otherSpecimens } = await supabase
+              .from('specimens')
+              .select('no')
+              .eq('model_url', originalModelUrl)
+              .neq('no', specimen.no)
+
+            // 다른 표본이 사용 중이면 삭제하지 않음
+            if (otherSpecimens && otherSpecimens.length > 0) {
+              console.log('⚠️ File is used by other specimens, skipping deletion')
+            } else {
+              // 다른 표본이 사용하지 않으면 삭제
+              const urlObj = new URL(originalModelUrl)
+              const pathParts = urlObj.pathname.split('/')
+              const bucketIndex = pathParts.findIndex((part) => part === 'specimen-models')
+              if (bucketIndex !== -1) {
+                const filePath = pathParts.slice(bucketIndex + 1).join('/')
+                console.log('🗑️ Deleting old file:', filePath)
+                await supabase.storage.from('specimen-models').remove([filePath])
+              }
             }
           } catch (error) {
             console.error('Failed to delete old file:', error)
