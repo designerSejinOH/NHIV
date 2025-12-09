@@ -102,9 +102,10 @@ export function LiveLocationLayer() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3, delay: 0.2 }}
         style={{
-          bottom: 0,
+          bottom: '75px',
+          right: '10px',
         }}
-        className='absolute right-2 top-2 w-fit h-fit z-10 flex flex-col gap-2'
+        className='absolute w-fit h-fit z-10 flex flex-col gap-2'
       >
         <button
           onClick={() => {
@@ -112,9 +113,9 @@ export function LiveLocationLayer() {
             setTracking('follow')
             map.panTo({ lat: loc.lat, lng: loc.lng })
           }}
-          className='w-full h-fit cursor-pointer flex justify-center rounded-lg overflow-hidden items-center bg-white text-black leading-none pl-3 pr-4 py-3 gap-2 text-sm shadow md:hover:bg-gray-100 active:scale-95 transition-all'
+          className='w-10 h-10 cursor-pointer flex justify-center rounded-full overflow-hidden items-center bg-white text-black/60 leading-none gap-2 shadow-sm md:hover:bg-gray-100 active:scale-95 transition-all'
         >
-          <FiNavigation className='translate-y-[1px]' /> 내 위치
+          <FiNavigation className='text-lg translate-y-px -translate-x-px' />
         </button>
         {/* <button
           onClick={() => setTracking((t) => (t === 'follow' ? 'observe' : 'follow'))}

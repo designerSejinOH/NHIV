@@ -10,6 +10,8 @@ import { useOffsetMarkers } from '@/hooks/useOffsetMarkers'
 import { useClusteredSpecimens } from '@/hooks/useClusteredSpecimens'
 import type { SpecimenWithRelations } from '@/types/database'
 import { CollectionModal } from './components'
+import { PiHouseLine } from 'react-icons/pi'
+import { GrLocationPin } from 'react-icons/gr'
 
 export type MapMode = 'collection' | 'death'
 
@@ -127,27 +129,33 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
   return (
     <section className={classNames('flex relative', className)}>
       {/* 맵 모드 표시 */}
-      <div className='absolute top-2 left-1/2 -translate-x-1/2 z-10 w-60 inline-flex items-center gap-2'>
-        {['collection', 'death'].map((mode) => (
-          <button
-            key={mode}
-            onClick={() => setMapMode(mode as MapMode)}
+      <div className='absolute top-2 left-1/2 -translate-x-1/2 z-10 w-fit inline-flex items-center gap-0 pointer-events-auto'>
+        <div className='relative inline-flex bg-white rounded-full p-1 shadow-md'>
+          {/* 슬라이딩 배경 */}
+          <div
             className={classNames(
-              'flex-1 w-full pl-3 pr-6 py-2 rounded-md pointer-events-auto shadow-md transition-all cursor-pointer flex items-center justify-center gap-2',
-              mapMode === mode
-                ? 'bg-[#3EBA72] text-white hover:bg-[#36a162] font-semibold '
-                : 'bg-white text-black hover:bg-gray-100 font-medium',
+              'absolute top-1 bottom-1 w-[calc(50%-0.25rem)] bg-[#3EBA72] rounded-full transition-all duration-300 ease-in-out',
             )}
-          >
-            <span
+            style={{
+              left: mapMode === 'collection' ? '0.25rem' : 'calc(50% - 0.05rem)',
+            }}
+          />
+
+          {/* 버튼들 */}
+          {['collection', 'death'].map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setMapMode(mode as MapMode)}
               className={classNames(
-                'mr-1 inline-block w-2 h-2 bg-white rounded-full',
-                mode === 'collection' ? 'bg-[#3EBA72]' : 'bg-[#FF6B6B]',
+                'relative z-10 pl-3 pr-4 py-2 rounded-full transition-all duration-300 cursor-pointer flex items-center gap-2 text-sm font-semibold',
+                mapMode === mode ? 'text-white' : 'text-gray-600 hover:text-gray-900',
               )}
-            />
-            {mode === 'collection' ? '소장처' : '발견지'}
-          </button>
-        ))}
+            >
+              {mode === 'collection' ? <PiHouseLine className='text-base' /> : <GrLocationPin className='text-base' />}
+              {mode === 'collection' ? '소장처' : '발견지'}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className='absolute left-2 top-2 z-10 flex flex-col gap-2 pointer-events-none rounded-lg bg-white text-black px-3 py-1.5'>
