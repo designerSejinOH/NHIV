@@ -84,7 +84,6 @@ export default function Home() {
       )
 
       setSpecimens(specimensWithProtection)
-      console.log(specimensWithProtection)
     } catch (error) {
       console.error('Error fetching specimens:', error)
     } finally {
