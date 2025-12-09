@@ -39,6 +39,7 @@ export interface SpecimenWithRelations extends Specimen {
     name_sci: string | null
     classifications?: {
       name: string
+      name_en: string | null
     }
   }
   collections?: {

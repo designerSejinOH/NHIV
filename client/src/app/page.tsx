@@ -38,7 +38,8 @@ export default function Home() {
           name_en,
           name_sci,
           classifications (
-            name
+            name,
+            name_en
           )
         ),
         collections (

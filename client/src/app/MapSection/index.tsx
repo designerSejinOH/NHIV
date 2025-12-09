@@ -12,6 +12,9 @@ import type { SpecimenWithRelations } from '@/types/database'
 import { CollectionModal } from './components'
 import { PiHouseLine } from 'react-icons/pi'
 import { GrLocationPin } from 'react-icons/gr'
+import { extractClassificationKey } from '@/hooks/extractClassificationKey'
+import { CLASSIFICATION_COLORS } from '@/styles/colors'
+import { GoChevronRight } from 'react-icons/go'
 
 export type MapMode = 'collection' | 'death'
 
@@ -29,6 +32,7 @@ interface MapSectionProps {
 export interface CollectionGroup {
   collectionId: number
   institutionName: string
+  address: string
   lat: number
   lng: number
   specimens: SpecimenWithRelations[]
@@ -87,6 +91,7 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
         groups.set(s.collection_id, {
           collectionId: s.collection_id,
           institutionName: s.collections.institution_name,
+          address: s.collections.address!,
           lat: s.collections.latitude!,
           lng: s.collections.longitude!,
           specimens: [],
@@ -124,17 +129,17 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
   // 줌 단계 텍스트
   const zoomLabel = zoom < 10 ? '국가 / 광역' : zoom < 14 ? '도시 / 구 단위' : zoom < 17 ? '동네 / 거리' : '세부 / 건물'
 
-  console.log('specimens : ', specimens)
+  console.log(clustersOrMarkers)
 
   return (
     <section className={classNames('flex relative', className)}>
       {/* 맵 모드 표시 */}
       <div className='absolute top-2 left-1/2 -translate-x-1/2 z-10 w-fit inline-flex items-center gap-0 pointer-events-auto'>
-        <div className='relative inline-flex bg-white rounded-full p-1 shadow-md'>
+        <div className='relative inline-flex bg-white rounded-xl p-1 shadow-md'>
           {/* 슬라이딩 배경 */}
           <div
             className={classNames(
-              'absolute top-1 bottom-1 w-[calc(50%-0.25rem)] bg-[#3EBA72] rounded-full transition-all duration-300 ease-in-out',
+              'absolute top-1 bottom-1 w-[calc(50%-0.25rem)] bg-[#3EBA72] rounded-lg transition-all duration-300 ease-in-out',
             )}
             style={{
               left: mapMode === 'collection' ? '0.25rem' : 'calc(50% - 0.05rem)',
@@ -227,7 +232,7 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
                 }}
                 className='flex flex-col items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all'
               >
-                <div className='flex items-center justify-center rounded-full bg-[#3EBA72] text-white text-base font-semibold w-14 h-14 shadow-lg border-4 border-white'>
+                <div className='flex items-center justify-center rounded-full bg-[#3EBA72] text-white text-base font-semibold w-12 h-12 shadow-lg border-3 border-white'>
                   {group.count}
                 </div>
                 <div className='mt-2 bg-white px-3 py-1.5 rounded-full shadow-md'>
@@ -289,10 +294,55 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
                     pointerEvents: 'auto',
                     borderRadius: '12px',
                   }}
-                  className='w-fit h-fit flex flex-row gap-2 rounded-lg overflow-hidden bg-white p-2 shadow-lg items-center justify-center cursor-pointer hover:bg-[#FFF5F5] active:scale-95 transition-all'
+                  className='relative w-fit h-fit flex flex-row p-1 rounded-lg overflow-visible bg-white shadow-lg items-center justify-center cursor-pointer hover:bg-[#FFF5F5] active:scale-95 transition-all'
                 >
-                  <div className='w-6 h-6 bg-[#FF6B6B]' />
-                  <span className='w-fit h-fit text-sm font-medium text-black'>{item.specimen.specimen_id}</span>
+                  {/* 🔥 툴팁 꼭지 (아래쪽 화살표) */}
+                  <div
+                    className='absolute left-1/2 -translate-x-1/2 pointer-events-none'
+                    style={{
+                      bottom: '-7px',
+                      width: 0,
+                      height: 0,
+                      borderLeft: '8px solid transparent',
+                      borderRight: '8px solid transparent',
+                      borderTop: '8px solid white',
+                      filter: 'drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1))',
+                    }}
+                  />
+
+                  <div className='flex justify-center items-center w-fit h-16 p-2'>
+                    <div
+                      className='w-10 h-10'
+                      style={{
+                        backgroundColor:
+                          CLASSIFICATION_COLORS[
+                            extractClassificationKey(item.specimen.species?.classifications?.name || '')
+                          ],
+                        mask: `url('/img/${extractClassificationKey(item.specimen.species?.classifications?.name || '')}.png') no-repeat center / contain`,
+                        WebkitMask: `url('/img/${extractClassificationKey(item.specimen.species?.classifications?.name || '')}.png') no-repeat center / contain`,
+                      }}
+                    />
+                  </div>
+                  <div className='w-fit h-16 flex flex-col gap-0.5 text-nowrap px-2 py-2'>
+                    <span className='w-fit h-fit text-xs font-medium text-gray-500'>{item.specimen.specimen_id}</span>
+                    <span className='w-fit h-fit text-base font-semibold text-black leading-tight'>
+                      {item.specimen.species?.name_kr || '알 수 없음'}
+                    </span>
+                    <span className='w-fit h-fit text-xxs font-normal text-black/40 leading-none'>
+                      {item.specimen.species?.name_en || 'Unknown'}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      backgroundColor:
+                        CLASSIFICATION_COLORS[
+                          extractClassificationKey(item.specimen.species?.classifications?.name || '')
+                        ],
+                    }}
+                    className='w-fit h-16 text-white font-bold flex px-1 rounded-r-lg flex-col text-lg items-center justify-center'
+                  >
+                    <GoChevronRight />
+                  </div>
                 </div>
               </OverlayViewF>
             )
@@ -314,32 +364,53 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
                   position: 'absolute',
                   transform: 'translate(-50%, -100%)',
                   pointerEvents: 'auto',
+                  borderRadius: '12px',
                 }}
-                className={classNames(
-                  'relative',
-                  'w-fit h-fit flex items-start gap-2',
-                  'bg-white shadow-xl rounded-xl p-1',
-                  'cursor-pointer hover:scale-105 active:scale-95 transition-all',
-                  'border border-black/5',
-                )}
+                className='relative w-fit h-fit flex flex-row p-1 rounded-lg overflow-visible bg-white shadow-lg items-center justify-center cursor-pointer hover:bg-[#FFF5F5] active:scale-95 transition-all'
               >
-                <div className='w-16 h-16 flex-shrink-0 rounded-md bg-[#FF6B6B] flex items-center justify-center text-white text-xs'>
-                  이미지
-                </div>
-
-                <div className='w-fit h-fit flex flex-col gap-1 pr-1 py-0.5'>
-                  <span className='text-xs text-black/60 font-medium leading-none'>{item.specimen_id}</span>
-                  <span className='text-base text-black font-semibold leading-tight'>표본 #{item.no}</span>
-                  <span className='text-xs text-black/40 leading-none'>{item.death_location_text}</span>
-                </div>
-
+                {/* 🔥 툴팁 꼭지 (아래쪽 화살표) */}
                 <div
-                  className='absolute left-1/2 bottom-[-10px] -translate-x-1/2 w-0 h-0
-                    border-l-[8px] border-l-transparent
-                    border-r-[8px] border-r-transparent
-                    border-t-[10px] border-t-white
-                    drop-shadow-md'
+                  className='absolute left-1/2 -translate-x-1/2 pointer-events-none'
+                  style={{
+                    bottom: '-7px',
+                    width: 0,
+                    height: 0,
+                    borderLeft: '8px solid transparent',
+                    borderRight: '8px solid transparent',
+                    borderTop: '8px solid white',
+                    filter: 'drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1))',
+                  }}
                 />
+
+                <div className='flex justify-center items-center w-fit h-16 p-2'>
+                  <div
+                    className='w-10 h-10'
+                    style={{
+                      backgroundColor:
+                        CLASSIFICATION_COLORS[extractClassificationKey(item.species?.classifications?.name || '')],
+                      mask: `url('/img/${extractClassificationKey(item.species?.classifications?.name || '')}.png') no-repeat center / contain`,
+                      WebkitMask: `url('/img/${extractClassificationKey(item.species?.classifications?.name || '')}.png') no-repeat center / contain`,
+                    }}
+                  />
+                </div>
+                <div className='w-fit h-16 flex flex-col gap-0.5 text-nowrap px-2 py-2'>
+                  <span className='w-fit h-fit text-xs font-medium text-gray-500'>{item.specimen_id}</span>
+                  <span className='w-fit h-fit text-base font-semibold text-black leading-tight'>
+                    {item.species?.name_kr || '알 수 없음'}
+                  </span>
+                  <span className='w-fit h-fit text-xxs font-normal text-black/40 leading-none'>
+                    {item.species?.name_en || 'Unknown'}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    backgroundColor:
+                      CLASSIFICATION_COLORS[extractClassificationKey(item.species?.classifications?.name || '')],
+                  }}
+                  className='w-fit h-16 text-white font-bold flex px-1 rounded-r-lg flex-col text-lg items-center justify-center'
+                >
+                  <GoChevronRight />
+                </div>
               </div>
             </OverlayViewF>
           ))}

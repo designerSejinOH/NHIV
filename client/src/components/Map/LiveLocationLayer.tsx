@@ -66,7 +66,7 @@ export function LiveLocationLayer() {
             style={{
               transformOrigin: 'center',
             }}
-            className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[1] bg-[#028261] rounded-lg overflow-hidden font-medium text-white px-3 py-2 w-fit text-sm shadow'
+            className='absolute left-1/2 -translate-x-1/2 bottom-2 z-[1] bg-white/70 backdrop-blur-md rounded-lg overflow-hidden font-medium text-red-400 px-3 py-2 w-fit text-sm shadow'
           >
             {!loc && (permission === 'prompt' || permission === 'unknown') && (
               <div className=''>위치 권한을 허용해 주세요.</div>

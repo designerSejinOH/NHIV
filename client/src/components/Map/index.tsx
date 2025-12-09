@@ -13,20 +13,19 @@ interface MapProps {
 }
 
 function MapBase({ defaultCenter, defaultZoom = 10, children, onIdle }: MapProps) {
-   const { isLoaded } = useGoogleMaps()
-   const mapRef = useRef<google.maps.Map>()
+  const { isLoaded } = useGoogleMaps()
+  const mapRef = useRef<google.maps.Map>()
 
-   const center = useMemo(() => defaultCenter ?? ({ lat: 37.5665, lng: 126.978 } as const), [defaultCenter])
+  const center = useMemo(() => defaultCenter ?? ({ lat: 37.5665, lng: 126.978 } as const), [defaultCenter])
 
-   const onMapLoad = useCallback((m: google.maps.Map) => {
-     mapRef.current = m
-   }, [])
+  const onMapLoad = useCallback((m: google.maps.Map) => {
+    mapRef.current = m
+  }, [])
 
-   const handleIdle = useCallback(() => {
-     if (!mapRef.current) return
-     onIdle?.(mapRef.current) // 🔥 parent에 map 넘겨줌
-   }, [onIdle])
-
+  const handleIdle = useCallback(() => {
+    if (!mapRef.current) return
+    onIdle?.(mapRef.current) // 🔥 parent에 map 넘겨줌
+  }, [onIdle])
 
   if (!isLoaded) {
     return (
