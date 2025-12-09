@@ -1,7 +1,7 @@
 // hooks/useClusteredSpecimens.ts
 import { useMemo } from 'react'
 import Supercluster from 'supercluster'
-import type { SpecimenWithCollection } from '@/types/database'
+import type { SpecimenWithRelations } from '@/types/database'
 
 type Bounds = {
   north: number
@@ -20,7 +20,7 @@ type ClusterPoint = {
 
 type MarkerPoint = {
   type: 'marker'
-  specimen: SpecimenWithCollection
+  specimen: SpecimenWithRelations
   lat: number
   lng: number
 }
@@ -28,7 +28,7 @@ type MarkerPoint = {
 export type ClusterOrMarker = ClusterPoint | MarkerPoint
 
 export const useClusteredSpecimens = (
-  specimens: SpecimenWithCollection[] | undefined,
+  specimens: SpecimenWithRelations[] | undefined,
   bounds: Bounds | null,
   zoom: number,
 ): ClusterOrMarker[] => {
@@ -69,7 +69,7 @@ export const useClusteredSpecimens = (
 
       return {
         type: 'marker',
-        specimen: c.properties.specimen as SpecimenWithCollection,
+        specimen: c.properties.specimen as SpecimenWithRelations,
         lat,
         lng,
       }

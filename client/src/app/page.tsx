@@ -8,11 +8,11 @@ import { FilterSection } from './FilterSection'
 import { Intro } from './Intro'
 import { MapSection } from './MapSection'
 import { supabase } from '@/lib/supabase'
-import type { SpecimenWithCollection } from '@/types/database'
+import type { SpecimenWithRelations } from '@/types/database'
 import { AnimatePresence, motion } from 'framer-motion'
 
 export default function Home() {
-  const [specimens, setSpecimens] = useState<SpecimenWithCollection[]>([])
+  const [specimens, setSpecimens] = useState<SpecimenWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [hideTab, setHideTab] = useState(false)
   const [isPageInfo, setIsPageInfo] = useState(true)
@@ -43,6 +43,7 @@ export default function Home() {
         ),
         collections (
           institution_name,
+          address,
           latitude,
           longitude
         ),

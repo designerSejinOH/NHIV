@@ -1,6 +1,6 @@
 // hooks/useOffsetMarkers.ts
 import { useMemo } from 'react'
-import { SpecimenWithCollection } from '@/types/database'
+import { SpecimenWithRelations } from '@/types/database'
 
 // 같은 위치에 있는 핀들을 원형으로 흩뿌리는 함수
 const getOffsetLatLng = (baseLat: number, baseLng: number, index: number, total: number) => {
@@ -21,7 +21,7 @@ const getOffsetLatLng = (baseLat: number, baseLng: number, index: number, total:
   }
 }
 
-export const useOffsetMarkers = (specimens: SpecimenWithCollection[] | undefined) => {
+export const useOffsetMarkers = (specimens: SpecimenWithRelations[] | undefined) => {
   return useMemo(() => {
     if (!specimens) return []
 
@@ -36,7 +36,7 @@ export const useOffsetMarkers = (specimens: SpecimenWithCollection[] | undefined
         acc[key].push(item)
         return acc
       },
-      {} as Record<string, SpecimenWithCollection[]>,
+      {} as Record<string, SpecimenWithRelations[]>,
     )
 
     // 2) offset lat/lng 계산해서 펼쳐진 배열 리턴

@@ -32,11 +32,28 @@ export interface Specimen {
   updated_at: string
 }
 
-export interface SpecimenWithCollection extends Specimen {
+export interface SpecimenWithRelations extends Specimen {
+  species?: {
+    name_kr: string
+    name_en: string | null
+    name_sci: string | null
+    classifications?: {
+      name: string
+    }
+  }
   collections?: {
+    institution_name: string
     latitude: number | null
     longitude: number | null
-    institution_name: string
+    address: string | null
   }
+  iucn_statuses?: {
+    code: string
+    name_kr: string
+    name_en: string
+  }
+  protection_type_ids: number[] | null
+  protection_types?: string[]
+
   latlng?: [number, number] // 동적으로 추가되는 필드
 }

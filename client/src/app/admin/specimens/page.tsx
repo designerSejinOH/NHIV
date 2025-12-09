@@ -28,6 +28,7 @@ export default function SpecimensPage() {
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false)
   const [selectedSpecimen, setSelectedSpecimen] = useState<Specimen | null>(null)
   const [duplicateTarget, setDuplicateTarget] = useState<{ no: number; specimen_id: string } | null>(null)
+  const [fileStatuses, setFileStatuses] = useState<Record<number, 'checking' | 'valid' | 'invalid' | 'none'>>({})
 
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -44,7 +45,6 @@ export default function SpecimensPage() {
       if (specimenToEdit) {
         setSelectedSpecimen(specimenToEdit)
         setIsModalOpen(true)
-        // URL에서 쿼리 파라미터 제거
         router.replace('/admin/specimens', { scroll: false })
       }
     }
@@ -74,10 +74,65 @@ export default function SpecimensPage() {
 
       if (error) throw error
       setSpecimens(data || [])
+
+      // 파일 상태 확인
+      if (data) {
+        checkFileStatuses(data)
+      }
     } catch (error) {
       console.error('Error fetching specimens:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // 파일 유효성 확인
+  const checkFileStatuses = async (specimens: SpecimenWithRelations[]) => {
+    const statuses: Record<number, 'checking' | 'valid' | 'invalid' | 'none'> = {}
+
+    // 초기 상태 설정
+    specimens.forEach((specimen) => {
+      if (!specimen.model_url) {
+        statuses[specimen.no] = 'none'
+      } else {
+        statuses[specimen.no] = 'checking'
+      }
+    })
+    setFileStatuses(statuses)
+
+    // 파일 존재 확인
+    for (const specimen of specimens) {
+      if (!specimen.model_url) continue
+
+      try {
+        const url = new URL(specimen.model_url)
+        const pathParts = url.pathname.split('/')
+        const bucketIndex = pathParts.findIndex((part) => part === 'specimen-models')
+
+        if (bucketIndex !== -1) {
+          const filePath = pathParts.slice(bucketIndex + 1).join('/')
+
+          // Storage에서 파일 존재 확인
+          const { data, error } = await supabase.storage
+            .from('specimen-models')
+            .list(filePath.substring(0, filePath.lastIndexOf('/')), {
+              search: filePath.substring(filePath.lastIndexOf('/') + 1),
+            })
+
+          if (error || !data || data.length === 0) {
+            statuses[specimen.no] = 'invalid'
+          } else {
+            statuses[specimen.no] = 'valid'
+          }
+        } else {
+          statuses[specimen.no] = 'invalid'
+        }
+      } catch (error) {
+        statuses[specimen.no] = 'invalid'
+      }
+
+      // 상태 업데이트 (실시간으로 보여주기)
+      setFileStatuses({ ...statuses })
     }
   }
 
@@ -102,23 +157,19 @@ export default function SpecimensPage() {
     try {
       console.log('🗑️ Starting deletion for specimen:', specimenId)
 
-      // 1. 삭제할 표본의 파일 URL 먼저 조회
       const { data: specimenToDelete } = await supabase.from('specimens').select('model_url').eq('no', no).single()
 
       console.log('📋 Specimen data:', specimenToDelete)
 
-      // 2. 표본 삭제
       const { error } = await supabase.from('specimens').delete().eq('no', no)
 
       if (error) throw error
       console.log('✅ Specimen deleted from database')
 
-      // 3. 파일이 있으면 삭제 시도
       if (specimenToDelete?.model_url) {
         try {
           console.log('🔍 Checking if file is used by other specimens...')
 
-          // ✅ 다른 표본이 같은 파일을 사용하는지 확인
           const { data: otherSpecimens } = await supabase
             .from('specimens')
             .select('no')
@@ -126,7 +177,6 @@ export default function SpecimensPage() {
 
           console.log('📊 Other specimens using this file:', otherSpecimens?.length || 0)
 
-          // 다른 표본이 사용하지 않으면 파일 삭제
           if (!otherSpecimens || otherSpecimens.length === 0) {
             const url = new URL(specimenToDelete.model_url)
             const pathParts = url.pathname.split('/')
@@ -149,7 +199,6 @@ export default function SpecimensPage() {
           }
         } catch (fileError) {
           console.error('⚠️ Error handling file deletion:', fileError)
-          // 파일 삭제 실패는 무시 (표본은 이미 삭제됨)
         }
       } else {
         console.log('ℹ️ No file to delete')
@@ -165,6 +214,60 @@ export default function SpecimensPage() {
 
   const handleModalSuccess = () => {
     fetchSpecimens()
+  }
+
+  // 파일 상태 뱃지 컴포넌트
+  const FileStatusBadge = ({ status }: { status: 'checking' | 'valid' | 'invalid' | 'none' }) => {
+    switch (status) {
+      case 'checking':
+        return (
+          <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600'>
+            <svg className='animate-spin h-3 w-3 mr-1' viewBox='0 0 24 24'>
+              <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' fill='none' />
+              <path
+                className='opacity-75'
+                fill='currentColor'
+                d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+              />
+            </svg>
+            확인중
+          </span>
+        )
+      case 'valid':
+        return (
+          <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800'>
+            <svg className='w-3 h-3 mr-1' fill='currentColor' viewBox='0 0 20 20'>
+              <path
+                fillRule='evenodd'
+                d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                clipRule='evenodd'
+              />
+            </svg>
+            정상
+          </span>
+        )
+      case 'invalid':
+        return (
+          <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800'>
+            <svg className='w-3 h-3 mr-1' fill='currentColor' viewBox='0 0 20 20'>
+              <path
+                fillRule='evenodd'
+                d='M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z'
+                clipRule='evenodd'
+              />
+            </svg>
+            없음
+          </span>
+        )
+      case 'none':
+        return (
+          <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500'>
+            -
+          </span>
+        )
+      default:
+        return null
+    }
   }
 
   if (loading) {
@@ -192,6 +295,7 @@ export default function SpecimensPage() {
                   <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>표본 ID</th>
                   <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>생물종</th>
                   <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>소장처</th>
+                  <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>파일 상태</th>
                   <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>IUCN</th>
                   <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>작업</th>
                 </tr>
@@ -214,6 +318,9 @@ export default function SpecimensPage() {
                       )}
                     </td>
                     <td className='px-6 py-4 whitespace-nowrap text-sm'>{item.collections?.institution_name || '-'}</td>
+                    <td className='px-6 py-4 whitespace-nowrap text-sm'>
+                      <FileStatusBadge status={fileStatuses[item.no] || 'checking'} />
+                    </td>
                     <td className='px-6 py-4 whitespace-nowrap text-sm'>
                       {item.iucn_statuses ? <span className='font-bold'>{item.iucn_statuses.code}</span> : '-'}
                     </td>
