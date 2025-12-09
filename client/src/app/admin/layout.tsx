@@ -78,7 +78,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 flex flex-col gap-4'>
           {/* 상단: 타이틀 + 유저 */}
           <div className='flex justify-between items-center w-full'>
-            <h1 className='text-xl font-bold'>표본 관리 시스템</h1>
+            <div className='w-fit h-fit inline-flex gap-4 justify-center items-center'>
+              <h1 className='text-xl font-bold'>표본 관리 시스템</h1>
+              <Link href='/' className='bg-[#028261] text-white px-3 py-1 rounded text-sm hover:bg-[#026f4b]'>
+                서비스로 이동
+              </Link>
+            </div>
 
             <div className='flex items-center space-x-4'>
               <span className='text-gray-700'>{user?.username}님</span>

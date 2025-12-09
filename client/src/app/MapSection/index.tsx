@@ -13,6 +13,7 @@ import type { SpecimenWithCollection } from '@/types/database'
 export type MapMode = 'collection' | 'death'
 
 const PIN_EXPAND_ZOOM = 16
+const DEFAULT_ZOOM = 8
 
 interface MapSectionProps {
   specimens?: SpecimenWithCollection[]
@@ -130,7 +131,7 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
 
       <Map
         defaultCenter={null}
-        defaultZoom={15}
+        defaultZoom={DEFAULT_ZOOM}
         onIdle={(map) => {
           mapRef.current = map
 
