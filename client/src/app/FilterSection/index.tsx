@@ -5,14 +5,16 @@ import { FilterBox } from './Filterbox'
 import classNames from 'classnames'
 import { MdFilterVintage } from 'react-icons/md'
 import { RiDeleteBinLine } from 'react-icons/ri'
+import type { FilterOptions } from '@/lib/filterUtils'
 
 interface FilterSectionProps {
   currentFilter: string[] | null
   setCurrentFilter: React.Dispatch<React.SetStateAction<string[] | null>>
+  filterOptions: FilterOptions | null
   className?: string
 }
 
-export const FilterSection = ({ currentFilter, setCurrentFilter, className }: FilterSectionProps) => {
+export const FilterSection = ({ currentFilter, setCurrentFilter, filterOptions, className }: FilterSectionProps) => {
   const selectedRef = useRef<HTMLDivElement | null>(null)
   const [hasOverflow, setHasOverflow] = useState(false)
   const [atTop, setAtTop] = useState(true)
@@ -45,6 +47,20 @@ export const FilterSection = ({ currentFilter, setCurrentFilter, className }: Fi
 
     const overflow = scrollHeight > clientHeight + 1
     setHasOverflow(overflow)
+  }
+
+  // 필터 옵션이 로드되지 않은 경우
+  if (!filterOptions) {
+    return (
+      <section
+        className={classNames(
+          'bg-[#E0F2E6] text-[#028261] flex flex-col gap-2 pb-2 px-2 justify-center items-center min-h-0',
+          className,
+        )}
+      >
+        <div className='text-base'>필터 옵션을 로딩 중...</div>
+      </section>
+    )
   }
 
   return (
@@ -132,40 +148,55 @@ export const FilterSection = ({ currentFilter, setCurrentFilter, className }: Fi
         </div>
       </div>
 
-      {/* scrollable area */}
+      {/* scrollable area - 실제 데이터 기반 필터 */}
       <div className='w-full flex-1 flex flex-col gap-2 overflow-y-auto snap-y no-scroll-bar rounded-lg'>
         <FilterBox
           title='주요 탐색'
           filters={[
-            {
-              type: 'checkbox',
-              key: 'national_protection_status',
-              label: '국가보호종',
-              options: ['멸종위기 야생생물', '멸종위기 야생생물 2급', '천연기념물', '해양보호생물'],
-            },
-            {
-              type: 'checkbox',
-              key: 'class_name',
-              label: '생물학적 분류',
-              options: ['포유류 (포유동물강, Mammalia)', '조류 (조강, Aves)', '곤충류 (곤충강, Insecta)'],
-            },
-            {
-              type: 'checkbox',
-              key: 'specimen_location',
-              label: '표본 수집 위치',
-              options: ['서울특별시', '경기도', '강원도'],
-            },
-            {
-              type: 'checkbox',
-              key: 'specimen_made_by',
-              label: '표본 제작자',
-              options: [
-                '국가유산수리기능자 제2456호 오동세',
-                '국가유산수리기능자 제2460호 원효식',
-                '국가유산수리기능자 제7937호 오정우',
-                'DASHBAT Tuvdendorj',
-              ],
-            },
+            // 국가보호종 - 데이터에서 추출
+            ...(filterOptions.protectionTypes.length > 0
+              ? [
+                  {
+                    type: 'checkbox' as const,
+                    key: 'national_protection_status',
+                    label: '국가보호종',
+                    options: filterOptions.protectionTypes,
+                  },
+                ]
+              : []),
+            // 생물학적 분류 - 데이터에서 추출
+            ...(filterOptions.classifications.length > 0
+              ? [
+                  {
+                    type: 'checkbox' as const,
+                    key: 'class_name',
+                    label: '생물학적 분류',
+                    options: filterOptions.classifications,
+                  },
+                ]
+              : []),
+            // 소장처 - 데이터에서 추출
+            ...(filterOptions.collections.length > 0
+              ? [
+                  {
+                    type: 'checkbox' as const,
+                    key: 'specimen_location',
+                    label: '소장처',
+                    options: filterOptions.collections,
+                  },
+                ]
+              : []),
+            // 표본 제작자 - 데이터에서 추출
+            ...(filterOptions.makers.length > 0
+              ? [
+                  {
+                    type: 'checkbox' as const,
+                    key: 'specimen_made_by',
+                    label: '표본 제작자',
+                    options: filterOptions.makers,
+                  },
+                ]
+              : []),
           ]}
           currentFilter={currentFilter}
           setCurrentFilter={setCurrentFilter}
@@ -174,16 +205,16 @@ export const FilterSection = ({ currentFilter, setCurrentFilter, className }: Fi
           title='보조 탐색'
           filters={[
             {
-              type: 'range',
+              type: 'range' as const,
               key: 'specimen_made_date',
               label: '표본 제작 기간',
-              options: ['1950', '2025'], // min, max
+              options: [filterOptions.madeYearRange[0].toString(), filterOptions.madeYearRange[1].toString()],
             },
             {
-              type: 'range',
+              type: 'range' as const,
               key: 'death_date',
               label: '표본 수집 기간',
-              options: ['1950', '2025'],
+              options: [filterOptions.deathYearRange[0].toString(), filterOptions.deathYearRange[1].toString()],
             },
           ]}
           currentFilter={currentFilter}

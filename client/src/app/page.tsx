@@ -1,7 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
-import { Map, Copyright } from '@/components'
+import { useEffect, useState, useMemo } from 'react'
 import classNames from 'classnames'
 import { TitleSection } from './TitleSection'
 import { FilterSection } from './FilterSection'
@@ -10,9 +9,10 @@ import { MapSection } from './MapSection'
 import { supabase } from '@/lib/supabase'
 import type { SpecimenWithRelations } from '@/types/database'
 import { AnimatePresence, motion } from 'framer-motion'
+import { extractFilterOptions, applyFilters, type FilterOptions } from '@/lib/filterUtils'
 
 export default function Home() {
-  const [specimens, setSpecimens] = useState<SpecimenWithRelations[]>([])
+  const [allSpecimens, setAllSpecimens] = useState<SpecimenWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [hideTab, setHideTab] = useState(false)
   const [isPageInfo, setIsPageInfo] = useState(true)
@@ -83,13 +83,25 @@ export default function Home() {
         }),
       )
 
-      setSpecimens(specimensWithProtection)
+      setAllSpecimens(specimensWithProtection)
     } catch (error) {
       console.error('Error fetching specimens:', error)
     } finally {
       setLoading(false)
     }
   }
+
+  // 필터 옵션 추출 (전체 데이터 기반)
+  const filterOptions: FilterOptions | null = useMemo(() => {
+    if (allSpecimens.length === 0) return null
+    return extractFilterOptions(allSpecimens)
+  }, [allSpecimens])
+
+  // 필터 적용된 표본 데이터
+  const filteredSpecimens = useMemo(() => {
+    if (!filterOptions) return allSpecimens
+    return applyFilters(allSpecimens, currentFilter, filterOptions)
+  }, [allSpecimens, currentFilter, filterOptions])
 
   if (loading) {
     return (
@@ -121,6 +133,7 @@ export default function Home() {
                 className='w-full h-full rounded-lg shadow-md overflow-hidden'
                 currentFilter={currentFilter}
                 setCurrentFilter={setCurrentFilter}
+                filterOptions={filterOptions}
               />
             </motion.div>
 
@@ -142,20 +155,37 @@ export default function Home() {
                 animate={{ rotate: !hideTab ? 180 : 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <path strokeLinecap='round' strokeLinejoin='round' d='M8.25 4.5l7.5 7.5-7.5 7.5' />
+                <path strokeLinecap='round' strokeLinejoin='round' d='M15.75 19.5 8.25 12l7.5-7.5' />
               </motion.svg>
             </button>
           </div>
-          {/* 맵 - 오른쪽 전체 */}
+
+          {/* 지도/3D 영역 - 우측 */}
           <MapSection
-            className='w-full flex rounded-lg shadow-md overflow-hidden'
-            selectedHeritage={selectedHeritage}
+            specimens={filteredSpecimens}
             setSelectedHeritage={setSelectedHeritage}
-            specimens={specimens}
+            selectedHeritage={selectedHeritage}
+            className='w-full h-full rounded-lg shadow-md overflow-hidden'
           />
         </div>
-        {/* copyright */}
-        <Copyright />
+
+        {/* 필터 상태 표시 (디버깅용 - 나중에 제거 가능) */}
+        <AnimatePresence>
+          {currentFilter && currentFilter.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className='fixed top-4 right-4 bg-white px-4 py-2 rounded-lg shadow text-sm'
+            >
+              <div className='font-semibold text-gray-700 mb-1'>필터 적용됨</div>
+              <div className='text-gray-600'>
+                전체: {allSpecimens.length}개 → 필터링: {filteredSpecimens.length}개
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </>
   )
