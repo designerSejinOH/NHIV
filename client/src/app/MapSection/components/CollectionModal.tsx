@@ -230,12 +230,6 @@ export const CollectionModal = ({
               </div>
             </div>
           </div>
-          <p className='text-[9px] text-gray-400 leading-none -mt-1.5'>
-            Icons by Vitaly Gorbachev —
-            <a href='https://www.flaticon.com' target='_blank' rel='noopener noreferrer'>
-              Flaticon
-            </a>
-          </p>
         </motion.div>
       </motion.div>
     </AnimatePresence>

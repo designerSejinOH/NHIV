@@ -129,7 +129,7 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
   // 줌 단계 텍스트
   const zoomLabel = zoom < 10 ? '국가 / 광역' : zoom < 14 ? '도시 / 구 단위' : zoom < 17 ? '동네 / 거리' : '세부 / 건물'
 
-  console.log(clustersOrMarkers)
+  // console.log(clustersOrMarkers)
 
   return (
     <section className={classNames('flex relative', className)}>
