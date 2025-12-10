@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import FileUpload from './FileUpload'
+import { Map as GoogleMap } from '@/components'
+import { MarkerF, Autocomplete } from '@react-google-maps/api'
 
 interface Specimen {
   no: number
@@ -34,6 +36,9 @@ interface SpecimenModalProps {
   specimen?: Specimen | null
 }
 
+const DEFAULT_ZOOM = 15
+const DEFAULT_CENTER = { lat: 37.5665, lng: 126.978 }
+
 export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: SpecimenModalProps) {
   // 기본 정보
   const [no, setNo] = useState('')
@@ -47,6 +52,11 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
   const [deathLocationText, setDeathLocationText] = useState('')
   const [deathLatitude, setDeathLatitude] = useState('')
   const [deathLongitude, setDeathLongitude] = useState('')
+
+  // 마커 위치 (맵용)
+  const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(null)
+  const mapRef = useRef<google.maps.Map | null>(null)
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
 
   // 날짜 정보
   const [deathDateType, setDeathDateType] = useState<'full' | 'month'>('full')
@@ -83,8 +93,8 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'basic' | 'location' | 'bio' | 'protection'>('basic')
-  const [originalModelUrl, setOriginalModelUrl] = useState('') // 원래 URL 저장
-  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]) // 새로 업로드된 파일들
+  const [originalModelUrl, setOriginalModelUrl] = useState('')
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([])
 
   const isEditMode = !!specimen
 
@@ -94,6 +104,22 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
     }
   }, [isOpen])
 
+  // 좌표 입력 시 마커 위치 업데이트
+  useEffect(() => {
+    const lat = parseFloat(deathLatitude)
+    const lng = parseFloat(deathLongitude)
+
+    if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+      setMarkerPosition({ lat, lng })
+
+      if (mapRef.current) {
+        mapRef.current.panTo({ lat, lng })
+      }
+    } else if (!deathLatitude.trim() && !deathLongitude.trim()) {
+      setMarkerPosition(null)
+    }
+  }, [deathLatitude, deathLongitude])
+
   useEffect(() => {
     if (specimen) {
       setNo(specimen.no.toString())
@@ -101,11 +127,21 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
       setSexGrowth(specimen.sex_growth || '')
       setSize(specimen.size || '')
       setModelUrl(specimen.model_url || '')
-      setOriginalModelUrl(specimen.model_url || '') // 원래 URL 저장
+      setOriginalModelUrl(specimen.model_url || '')
       setCollectionId(specimen.collection_id?.toString() || '')
       setDeathLocationText(specimen.death_location_text || '')
       setDeathLatitude(specimen.death_latitude?.toString() || '')
       setDeathLongitude(specimen.death_longitude?.toString() || '')
+
+      // 마커 위치 설정
+      if (specimen.death_latitude && specimen.death_longitude) {
+        setMarkerPosition({
+          lat: specimen.death_latitude,
+          lng: specimen.death_longitude,
+        })
+      } else {
+        setMarkerPosition(null)
+      }
 
       setMadeBy(specimen.made_by || '')
       setSpeciesId(specimen.species_id?.toString() || '')
@@ -175,7 +211,7 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
     }
     setError('')
     setSuccess('')
-    setUploadedFiles([]) // 업로드된 파일 목록 초기화
+    setUploadedFiles([])
   }, [specimen, isOpen])
 
   const resetForm = () => {
@@ -189,6 +225,7 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
     setDeathLocationText('')
     setDeathLatitude('')
     setDeathLongitude('')
+    setMarkerPosition(null)
     setDeathDateType('full')
     setDeathYear('')
     setDeathMonth('')
@@ -227,27 +264,105 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
     }
   }
 
+  // Autocomplete 로드
+  const onLoadAutocomplete = (autocomplete: google.maps.places.Autocomplete) => {
+    autocompleteRef.current = autocomplete
+  }
+
+  // 장소 선택
+  const onPlaceChanged = () => {
+    if (autocompleteRef.current) {
+      const place = autocompleteRef.current.getPlace()
+
+      if (!place.geometry || !place.geometry.location) {
+        setError('자동완성 목록에서 장소를 선택해주세요.')
+        setTimeout(() => setError(''), 3000)
+        return
+      }
+
+      setError('')
+
+      const lat = place.geometry.location.lat()
+      const lng = place.geometry.location.lng()
+
+      setDeathLocationText(place.formatted_address || '')
+      setDeathLatitude(lat.toFixed(8))
+      setDeathLongitude(lng.toFixed(8))
+      setMarkerPosition({ lat, lng })
+
+      if (mapRef.current) {
+        mapRef.current.panTo({ lat, lng })
+        mapRef.current.setZoom(17)
+      }
+    }
+  }
+
+  // 마커 드래그
+  const handleMarkerDragEnd = (e: google.maps.MapMouseEvent) => {
+    if (e.latLng) {
+      const newLat = e.latLng.lat()
+      const newLng = e.latLng.lng()
+
+      setDeathLatitude(newLat.toFixed(8))
+      setDeathLongitude(newLng.toFixed(8))
+      setMarkerPosition({ lat: newLat, lng: newLng })
+
+      const geocoder = new google.maps.Geocoder()
+      geocoder.geocode(
+        {
+          location: { lat: newLat, lng: newLng },
+          language: 'ko',
+        },
+        (results, status) => {
+          if (status === 'OK' && results && results[0]) {
+            setDeathLocationText(results[0].formatted_address)
+          }
+        },
+      )
+    }
+  }
+
+  // 맵 클릭
+  const handleMapClick = (e: google.maps.MapMouseEvent) => {
+    if (e.latLng) {
+      const newLat = e.latLng.lat()
+      const newLng = e.latLng.lng()
+
+      setDeathLatitude(newLat.toFixed(8))
+      setDeathLongitude(newLng.toFixed(8))
+      setMarkerPosition({ lat: newLat, lng: newLng })
+
+      const geocoder = new google.maps.Geocoder()
+      geocoder.geocode(
+        {
+          location: { lat: newLat, lng: newLng },
+          language: 'ko',
+        },
+        (results, status) => {
+          if (status === 'OK' && results && results[0]) {
+            setDeathLocationText(results[0].formatted_address)
+          }
+        },
+      )
+    }
+  }
+
   const handleProtectionTypeToggle = (typeId: number) => {
     setProtectionTypeIds((prev) => (prev.includes(typeId) ? prev.filter((id) => id !== typeId) : [...prev, typeId]))
   }
 
-  // 파일 업로드 성공 핸들러
   const handleFileUploadSuccess = (url: string) => {
-    // 새로 업로드된 파일이면 목록에 추가
     if (url && url !== originalModelUrl) {
       setUploadedFiles((prev) => [...prev, url])
     }
     setModelUrl(url)
   }
 
-  // 업로드된 파일들 삭제
   const cleanupUploadedFiles = async () => {
     for (const url of uploadedFiles) {
       try {
-        // ✅ 다른 표본이 사용 중인 파일인지 확인
         const { data: existingSpecimens } = await supabase.from('specimens').select('no').eq('model_url', url)
 
-        // 다른 표본이 사용 중이면 삭제하지 않음
         if (existingSpecimens && existingSpecimens.length > 0) {
           console.log(`⚠️ File ${url} is used by specimens, skipping deletion`)
           continue
@@ -272,7 +387,6 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
     setError('')
     setSuccess('')
 
-    // 필수 필드 검증
     if (!isEditMode && !no.trim()) {
       setError('표본 번호를 입력해주세요.')
       return
@@ -283,7 +397,6 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
       return
     }
 
-    // 위도/경도 검증
     let lat: number | null = null
     let lng: number | null = null
 
@@ -308,7 +421,6 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
       return
     }
 
-    // 날짜 조합
     let deathDate: string | null = null
     if (deathYear && deathMonth) {
       if (deathDateType === 'full' && deathDay) {
@@ -369,24 +481,19 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
       const data = await response.json()
 
       if (response.ok) {
-        // ✅ 성공: 업로드된 파일 목록만 초기화 (삭제하지 않음)
         setUploadedFiles([])
 
-        // 기존 파일이 있고, 새 파일로 교체된 경우에만 기존 파일 삭제
         if (isEditMode && originalModelUrl && originalModelUrl !== modelUrl && modelUrl) {
           try {
-            // ✅ 추가 안전장치: 다른 표본이 이 파일을 사용 중인지 확인
             const { data: otherSpecimens } = await supabase
               .from('specimens')
               .select('no')
               .eq('model_url', originalModelUrl)
               .neq('no', specimen.no)
 
-            // 다른 표본이 사용 중이면 삭제하지 않음
             if (otherSpecimens && otherSpecimens.length > 0) {
               console.log('⚠️ File is used by other specimens, skipping deletion')
             } else {
-              // 다른 표본이 사용하지 않으면 삭제
               const urlObj = new URL(originalModelUrl)
               const pathParts = urlObj.pathname.split('/')
               const bucketIndex = pathParts.findIndex((part) => part === 'specimen-models')
@@ -404,7 +511,6 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
         setSuccess(isEditMode ? '표본이 수정되었습니다.' : '표본이 추가되었습니다.')
         setTimeout(() => {
           onSuccess()
-          // ✅ 성공 시에는 cleanup 하지 않고 바로 닫기
           resetForm()
           setError('')
           setSuccess('')
@@ -422,7 +528,6 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
   }
 
   const handleClose = async () => {
-    // ⚠️ 저장하지 않고 닫을 때만 새로 업로드된 파일들 삭제
     if (uploadedFiles.length > 0) {
       await cleanupUploadedFiles()
     }
@@ -434,11 +539,13 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
     onClose()
   }
 
+  const mapCenter = markerPosition || DEFAULT_CENTER
+
   if (!isOpen) return null
 
   return (
     <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'>
-      <div className='bg-white rounded-lg w-full max-w-4xl h-[70vh] flex flex-col'>
+      <div className='bg-white rounded-lg w-full max-w-6xl h-[85vh] flex flex-col'>
         <div className='p-6'>
           <h2 className='text-2xl font-bold'>{isEditMode ? '표본 수정' : '새 표본 추가'}</h2>
         </div>
@@ -487,7 +594,7 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className='flex-1 flex flex-col overflow-scroll'>
+        <form onSubmit={handleSubmit} className='flex-1 flex flex-col overflow-hidden'>
           <div className='flex-1 overflow-y-auto p-6'>
             {error && (
               <div className='mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded'>{error}</div>
@@ -565,133 +672,107 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
 
             {/* 소장/위치 탭 */}
             {activeTab === 'location' && (
-              <div className='space-y-4'>
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-1'>소장처</label>
-                  <select
-                    value={collectionId}
-                    onChange={(e) => setCollectionId(e.target.value)}
-                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                    disabled={loading}
-                  >
-                    <option value=''>선택 안 함</option>
-                    {collections.map((collection) => (
-                      <option key={collection.id} value={collection.id}>
-                        {collection.institution_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-1'>사망 위치 (텍스트)</label>
-                  <input
-                    type='text'
-                    value={deathLocationText}
-                    onChange={(e) => setDeathLocationText(e.target.value)}
-                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                    disabled={loading}
-                    placeholder='예: 서울특별시 강남구'
-                  />
-                </div>
-
-                <div className='grid grid-cols-2 gap-4'>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                {/* 왼쪽: 입력 폼 */}
+                <div className='space-y-4'>
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>사망 위치 위도</label>
-                    <input
-                      type='text'
-                      value={deathLatitude}
-                      onChange={(e) => setDeathLatitude(e.target.value)}
-                      className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                      disabled={loading}
-                      placeholder='예: 37.427715'
-                    />
-                  </div>
-
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>사망 위치 경도</label>
-                    <input
-                      type='text'
-                      value={deathLongitude}
-                      onChange={(e) => setDeathLongitude(e.target.value)}
-                      className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                      disabled={loading}
-                      placeholder='예: 127.016968'
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-1'>사망 날짜</label>
-                  <div className='space-y-2'>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>소장처</label>
                     <select
-                      value={deathDateType}
-                      onChange={(e) => {
-                        setDeathDateType(e.target.value as 'full' | 'month')
-                        if (e.target.value === 'month') {
-                          setDeathDay('')
-                        }
-                      }}
+                      value={collectionId}
+                      onChange={(e) => setCollectionId(e.target.value)}
                       className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
                       disabled={loading}
                     >
-                      <option value='month'>년/월만</option>
-                      <option value='full'>전체 날짜 (년/월/일)</option>
+                      <option value=''>선택 안 함</option>
+                      {collections.map((collection) => (
+                        <option key={collection.id} value={collection.id}>
+                          {collection.institution_name}
+                        </option>
+                      ))}
                     </select>
+                  </div>
 
-                    <div className='flex flex-row gap-2'>
-                      <div className='flex-1'>
-                        <input
-                          type='number'
-                          value={deathYear}
-                          onChange={(e) => setDeathYear(e.target.value)}
-                          className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                          disabled={loading}
-                          placeholder='년 (YYYY)'
-                          min='1900'
-                          max='2100'
-                        />
-                      </div>
-                      <div className='flex-1'>
-                        <input
-                          type='number'
-                          value={deathMonth}
-                          onChange={(e) => setDeathMonth(e.target.value)}
-                          className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                          disabled={loading}
-                          placeholder='월 (MM)'
-                          min='1'
-                          max='12'
-                        />
-                      </div>
-                      {deathDateType === 'full' && (
-                        <div className='flex-1'>
-                          <input
-                            type='number'
-                            value={deathDay}
-                            onChange={(e) => setDeathDay(e.target.value)}
-                            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                            disabled={loading}
-                            placeholder='일 (DD)'
-                            min='1'
-                            max='31'
-                          />
-                        </div>
-                      )}
+                  {/* 🔥 주소 검색 */}
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>사망 위치 검색</label>
+                    <Autocomplete
+                      onLoad={onLoadAutocomplete}
+                      onPlaceChanged={onPlaceChanged}
+                      options={{
+                        componentRestrictions: { country: 'kr' }, // 한국으로 제한
+                        fields: ['formatted_address', 'geometry', 'name'],
+                      }}
+                    >
+                      <input
+                        type='text'
+                        value={deathLocationText}
+                        onChange={(e) => setDeathLocationText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                          }
+                        }}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
+                        disabled={loading}
+                        placeholder='예: 서울특별시 강남구'
+                      />
+                    </Autocomplete>
+                    <p className='mt-1 text-xs text-gray-500'>🔍 장소명이나 주소를 입력하세요</p>
+                  </div>
+
+                  <div className='grid grid-cols-2 gap-4'>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>사망 위치 위도</label>
+                      <input
+                        type='text'
+                        value={deathLatitude}
+                        onChange={(e) => setDeathLatitude(e.target.value)}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
+                        disabled={loading}
+                        placeholder='예: 37.427715'
+                      />
+                    </div>
+
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>사망 위치 경도</label>
+                      <input
+                        type='text'
+                        value={deathLongitude}
+                        onChange={(e) => setDeathLongitude(e.target.value)}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
+                        disabled={loading}
+                        placeholder='예: 127.016968'
+                      />
                     </div>
                   </div>
-                </div>
 
-                <div className='grid grid-cols-2 gap-4'>
+                  <div className='bg-blue-50 border border-blue-200 rounded p-3'>
+                    <p className='text-sm text-blue-800 font-semibold mb-2'>💡 위치 설정 방법</p>
+                    <ul className='text-xs text-blue-700 space-y-1 list-disc list-inside'>
+                      <li>
+                        🔍 <strong>주소 검색:</strong> 장소명이나 주소 입력
+                      </li>
+                      <li>
+                        📍 <strong>지도 클릭:</strong> 원하는 위치 클릭
+                      </li>
+                      <li>
+                        🖱️ <strong>마커 드래그:</strong> 마커를 끌어서 조정
+                      </li>
+                      <li>
+                        ⌨️ <strong>직접 입력:</strong> 위도/경도 수동 입력
+                      </li>
+                    </ul>
+                  </div>
+
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>제작 날짜</label>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>사망 날짜</label>
                     <div className='space-y-2'>
                       <select
-                        value={madeDateType}
+                        value={deathDateType}
                         onChange={(e) => {
-                          setMadeDateType(e.target.value as 'full' | 'month')
+                          setDeathDateType(e.target.value as 'full' | 'month')
                           if (e.target.value === 'month') {
-                            setMadeDay('')
+                            setDeathDay('')
                           }
                         }}
                         className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
@@ -705,11 +786,11 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
                         <div className='flex-1'>
                           <input
                             type='number'
-                            value={madeYear}
-                            onChange={(e) => setMadeYear(e.target.value)}
+                            value={deathYear}
+                            onChange={(e) => setDeathYear(e.target.value)}
                             className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
                             disabled={loading}
-                            placeholder='년'
+                            placeholder='년 (YYYY)'
                             min='1900'
                             max='2100'
                           />
@@ -717,24 +798,24 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
                         <div className='flex-1'>
                           <input
                             type='number'
-                            value={madeMonth}
-                            onChange={(e) => setMadeMonth(e.target.value)}
+                            value={deathMonth}
+                            onChange={(e) => setDeathMonth(e.target.value)}
                             className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
                             disabled={loading}
-                            placeholder='월'
+                            placeholder='월 (MM)'
                             min='1'
                             max='12'
                           />
                         </div>
-                        {madeDateType === 'full' && (
+                        {deathDateType === 'full' && (
                           <div className='flex-1'>
                             <input
                               type='number'
-                              value={madeDay}
-                              onChange={(e) => setMadeDay(e.target.value)}
+                              value={deathDay}
+                              onChange={(e) => setDeathDay(e.target.value)}
                               className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
                               disabled={loading}
-                              placeholder='일'
+                              placeholder='일 (DD)'
                               min='1'
                               max='31'
                             />
@@ -744,17 +825,101 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
                     </div>
                   </div>
 
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>제작자</label>
-                    <input
-                      type='text'
-                      value={madeBy}
-                      onChange={(e) => setMadeBy(e.target.value)}
-                      className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
-                      disabled={loading}
-                      placeholder='예: 홍길동'
-                    />
+                  <div className='grid grid-cols-1 gap-4'>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>제작 날짜</label>
+                      <div className='space-y-2'>
+                        <select
+                          value={madeDateType}
+                          onChange={(e) => {
+                            setMadeDateType(e.target.value as 'full' | 'month')
+                            if (e.target.value === 'month') {
+                              setMadeDay('')
+                            }
+                          }}
+                          className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
+                          disabled={loading}
+                        >
+                          <option value='month'>년/월만</option>
+                          <option value='full'>전체 날짜 (년/월/일)</option>
+                        </select>
+
+                        <div className='flex flex-row gap-2'>
+                          <div className='flex-1'>
+                            <input
+                              type='number'
+                              value={madeYear}
+                              onChange={(e) => setMadeYear(e.target.value)}
+                              className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
+                              disabled={loading}
+                              placeholder='년'
+                              min='1900'
+                              max='2100'
+                            />
+                          </div>
+                          <div className='flex-1'>
+                            <input
+                              type='number'
+                              value={madeMonth}
+                              onChange={(e) => setMadeMonth(e.target.value)}
+                              className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
+                              disabled={loading}
+                              placeholder='월'
+                              min='1'
+                              max='12'
+                            />
+                          </div>
+                          {madeDateType === 'full' && (
+                            <div className='flex-1'>
+                              <input
+                                type='number'
+                                value={madeDay}
+                                onChange={(e) => setMadeDay(e.target.value)}
+                                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
+                                disabled={loading}
+                                placeholder='일'
+                                min='1'
+                                max='31'
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-1'>제작자</label>
+                      <input
+                        type='text'
+                        value={madeBy}
+                        onChange={(e) => setMadeBy(e.target.value)}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500'
+                        disabled={loading}
+                        placeholder='예: 홍길동'
+                      />
+                    </div>
                   </div>
+                </div>
+
+                {/* 오른쪽: 구글맵 */}
+                <div className='w-full h-[600px] rounded-lg overflow-hidden border-2 border-gray-300'>
+                  <GoogleMap
+                    defaultCenter={mapCenter}
+                    defaultZoom={DEFAULT_ZOOM}
+                    onIdle={(map) => {
+                      mapRef.current = map
+                    }}
+                  >
+                    {markerPosition && (
+                      <MarkerF
+                        position={markerPosition}
+                        draggable={true}
+                        onDragEnd={handleMarkerDragEnd}
+                        animation={google.maps.Animation.DROP}
+                        onClick={handleMapClick}
+                      />
+                    )}
+                  </GoogleMap>
                 </div>
               </div>
             )}
@@ -864,7 +1029,6 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
                 <div>
                   <label className='block text-sm font-medium text-gray-700 mb-2'>국가보호종 (복수 선택 가능)</label>
 
-                  {/* 선택 가능한 버튼들 */}
                   <div className='flex flex-wrap gap-2 mb-4'>
                     {protectionTypes.length === 0 ? (
                       <p className='text-sm text-gray-500'>등록된 보호종이 없습니다.</p>
@@ -891,7 +1055,6 @@ export default function SpecimenModal({ isOpen, onClose, onSuccess, specimen }: 
                     )}
                   </div>
 
-                  {/* 선택된 항목 표시 */}
                   {protectionTypeIds.length > 0 && (
                     <div className='border border-gray-300 rounded-md p-4 bg-gray-50'>
                       <p className='text-xs font-medium text-gray-700 mb-2'>

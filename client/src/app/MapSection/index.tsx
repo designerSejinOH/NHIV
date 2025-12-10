@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useMemo } from 'react'
-import { Map as GoogleMap } from '@/components' // 🔥 이름 변경
+import { Map as GoogleMap } from '@/components'
 import { OverlayViewF, OVERLAY_MOUSE_TARGET } from '@react-google-maps/api'
 import { LiveLocationLayer } from '@/components/Map/LiveLocationLayer'
 import { HeritageModal } from './components/HeritageModal'
@@ -78,11 +78,11 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
     return specimens.filter((s) => hasValidCoordinates(s, mapMode))
   }, [specimens, mapMode])
 
-  // 🔥 소장처별 그룹핑 (collection 모드 전용)
+  // 소장처별 그룹핑 (collection 모드 전용)
   const collectionGroups = useMemo(() => {
     if (mapMode !== 'collection') return []
 
-    const groups = new Map<number, CollectionGroup>() // 이제 에러 안 남!
+    const groups = new Map<number, CollectionGroup>()
 
     filteredSpecimens.forEach((s) => {
       if (!s.collection_id || !s.collections) return
@@ -120,7 +120,7 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
     })
   }, [filteredSpecimens, mapMode])
 
-  // 🔥 death 모드에서만 클러스터링/오프셋 적용
+  // death 모드에서만 클러스터링/오프셋 적용
   const clustersOrMarkers = useClusteredSpecimens(mapMode === 'death' ? specimensWithLatLng : [], bounds, zoom)
 
   const showOffsetMarkers = zoom >= PIN_EXPAND_ZOOM && mapMode === 'death'
@@ -128,8 +128,6 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
 
   // 줌 단계 텍스트
   const zoomLabel = zoom < 10 ? '국가 / 광역' : zoom < 14 ? '도시 / 구 단위' : zoom < 17 ? '동네 / 거리' : '세부 / 건물'
-
-  // console.log(clustersOrMarkers)
 
   return (
     <section className={classNames('flex relative', className)}>
@@ -185,7 +183,7 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
         </div>
       </div>
 
-      <GoogleMap // 🔥 Map → GoogleMap
+      <GoogleMap
         defaultCenter={null}
         defaultZoom={DEFAULT_ZOOM}
         onIdle={(map) => {
@@ -207,7 +205,7 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
           setZoom(z)
         }}
       >
-        {/* 🔥 소장처 모드: 소장처별 그룹 핀 */}
+        {/* 소장처 모드: 소장처별 그룹 핀 */}
         {mapMode === 'collection' &&
           collectionGroups.map((group) => (
             <OverlayViewF
@@ -242,7 +240,7 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
             </OverlayViewF>
           ))}
 
-        {/* 🔥 사망 장소 모드: 기존 클러스터링/오프셋 방식 */}
+        {/* 사망 장소 모드: 기존 클러스터링/오프셋 방식 */}
         {mapMode === 'death' &&
           !showOffsetMarkers &&
           clustersOrMarkers.map((item) => {
@@ -250,8 +248,9 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
               const handleClusterClick = () => {
                 if (!mapRef.current) return
 
-                const currentZoom = mapRef.current.getZoom() ?? 15
-                const targetZoom = Math.max(currentZoom + 2, PIN_EXPAND_ZOOM)
+                const currentZoom = mapRef.current.getZoom() ?? 10
+                // 🔥 클러스터 클릭 시 적당한 줌 레벨로 조정 (너무 많이 줌인하지 않음)
+                const targetZoom = Math.min(currentZoom + 3, PIN_EXPAND_ZOOM - 1)
 
                 mapRef.current.setZoom(targetZoom)
                 mapRef.current.panTo({ lat: item.lat, lng: item.lng })
@@ -270,12 +269,26 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
                       transform: 'translate(-50%, -50%)',
                       pointerEvents: 'auto',
                     }}
-                    className='flex items-center justify-center rounded-full bg-[#FF6B6B] text-white text-base font-semibold w-12 h-12 shadow-lg cursor-pointer hover:bg-[#ff5252] active:scale-95 transition-all'
+                    className='flex items-center justify-center rounded-full bg-[#3EBA72] text-white text-base font-semibold w-12 h-12 shadow-lg cursor-pointer hover:bg-[#36a162] active:scale-95 transition-all'
                   >
                     {item.pointCount}
                   </div>
                 </OverlayViewF>
               )
+            }
+
+            // 🔥 단일 마커 클릭 시 줌인 추가
+            const handleMarkerClick = () => {
+              setSelectedHeritage({ isSelected: true, data: item.specimen })
+
+              // 줌인 및 중앙 이동
+              if (mapRef.current) {
+                const currentZoom = mapRef.current.getZoom() ?? 15
+                if (currentZoom < 15) {
+                  mapRef.current.setZoom(15)
+                }
+                mapRef.current.panTo({ lat: item.lat, lng: item.lng })
+              }
             }
 
             return (
@@ -285,9 +298,7 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
                 mapPaneName={OVERLAY_MOUSE_TARGET}
               >
                 <div
-                  onClick={() => {
-                    setSelectedHeritage({ isSelected: true, data: item.specimen })
-                  }}
+                  onClick={handleMarkerClick} // 🔥 핸들러 추가
                   style={{
                     position: 'absolute',
                     transform: 'translate(-50%, -100%)',
@@ -296,7 +307,6 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
                   }}
                   className='relative w-fit h-fit flex flex-row p-1 rounded-lg overflow-visible bg-white shadow-lg items-center justify-center cursor-pointer hover:bg-[#FFF5F5] active:scale-95 transition-all'
                 >
-                  {/* 🔥 툴팁 꼭지 (아래쪽 화살표) */}
                   <div
                     className='absolute left-1/2 -translate-x-1/2 pointer-events-none'
                     style={{
@@ -348,83 +358,94 @@ export const MapSection = ({ specimens, setSelectedHeritage, selectedHeritage, c
             )
           })}
 
+        {/* 🔥 오프셋 마커 클릭 시 줌인 추가 */}
         {mapMode === 'death' &&
           showOffsetMarkers &&
-          offsetMarkers.map((item) => (
-            <OverlayViewF
-              key={`${item.no}-${item.groupIndex}`}
-              position={{ lat: item.offsetLatLng[0], lng: item.offsetLatLng[1] }}
-              mapPaneName={OVERLAY_MOUSE_TARGET}
-            >
-              <div
-                onClick={() => {
-                  setSelectedHeritage({ isSelected: true, data: item })
-                }}
-                style={{
-                  position: 'absolute',
-                  transform: 'translate(-50%, -100%)',
-                  pointerEvents: 'auto',
-                  borderRadius: '12px',
-                }}
-                className='relative w-fit h-fit flex flex-row p-1 rounded-lg overflow-visible bg-white shadow-lg items-center justify-center cursor-pointer hover:bg-[#FFF5F5] active:scale-95 transition-all'
-              >
-                {/* 🔥 툴팁 꼭지 (아래쪽 화살표) */}
-                <div
-                  className='absolute left-1/2 -translate-x-1/2 pointer-events-none'
-                  style={{
-                    bottom: '-7px',
-                    width: 0,
-                    height: 0,
-                    borderLeft: '8px solid transparent',
-                    borderRight: '8px solid transparent',
-                    borderTop: '8px solid white',
-                    filter: 'drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1))',
-                  }}
-                />
+          offsetMarkers.map((item) => {
+            const handleOffsetMarkerClick = () => {
+              setSelectedHeritage({ isSelected: true, data: item })
 
-                <div className='flex justify-center items-center w-fit h-16 p-2'>
+              // 줌인 및 중앙 이동
+              if (mapRef.current) {
+                const currentZoom = mapRef.current.getZoom() ?? 16
+                if (currentZoom < 17) {
+                  mapRef.current.setZoom(17)
+                }
+                mapRef.current.panTo({ lat: item.offsetLatLng[0], lng: item.offsetLatLng[1] })
+              }
+            }
+
+            return (
+              <OverlayViewF
+                key={`${item.no}-${item.groupIndex}`}
+                position={{ lat: item.offsetLatLng[0], lng: item.offsetLatLng[1] }}
+                mapPaneName={OVERLAY_MOUSE_TARGET}
+              >
+                <div
+                  onClick={handleOffsetMarkerClick} // 🔥 핸들러 추가
+                  style={{
+                    position: 'absolute',
+                    transform: 'translate(-50%, -100%)',
+                    pointerEvents: 'auto',
+                    borderRadius: '12px',
+                  }}
+                  className='relative w-fit h-fit flex flex-row p-1 rounded-lg overflow-visible bg-white shadow-lg items-center justify-center cursor-pointer hover:bg-[#FFF5F5] active:scale-95 transition-all'
+                >
                   <div
-                    className='w-10 h-10'
+                    className='absolute left-1/2 -translate-x-1/2 pointer-events-none'
+                    style={{
+                      bottom: '-7px',
+                      width: 0,
+                      height: 0,
+                      borderLeft: '8px solid transparent',
+                      borderRight: '8px solid transparent',
+                      borderTop: '8px solid white',
+                      filter: 'drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1))',
+                    }}
+                  />
+
+                  <div className='flex justify-center items-center w-fit h-16 p-2'>
+                    <div
+                      className='w-10 h-10'
+                      style={{
+                        backgroundColor:
+                          CLASSIFICATION_COLORS[extractClassificationKey(item.species?.classifications?.name || '')],
+                        mask: `url('/img/${extractClassificationKey(item.species?.classifications?.name || '')}.png') no-repeat center / contain`,
+                        WebkitMask: `url('/img/${extractClassificationKey(item.species?.classifications?.name || '')}.png') no-repeat center / contain`,
+                      }}
+                    />
+                  </div>
+                  <div className='w-fit h-16 flex flex-col gap-0.5 text-nowrap px-2 py-2'>
+                    <span className='w-fit h-fit text-xs font-medium text-gray-500'>{item.specimen_id}</span>
+                    <span className='w-fit h-fit text-base font-semibold text-black leading-tight'>
+                      {item.species?.name_kr || '알 수 없음'}
+                    </span>
+                    <span className='w-fit h-fit text-xxs font-normal text-black/40 leading-none'>
+                      {item.species?.name_en || 'Unknown'}
+                    </span>
+                  </div>
+                  <div
                     style={{
                       backgroundColor:
                         CLASSIFICATION_COLORS[extractClassificationKey(item.species?.classifications?.name || '')],
-                      mask: `url('/img/${extractClassificationKey(item.species?.classifications?.name || '')}.png') no-repeat center / contain`,
-                      WebkitMask: `url('/img/${extractClassificationKey(item.species?.classifications?.name || '')}.png') no-repeat center / contain`,
                     }}
-                  />
+                    className='w-fit h-16 text-white font-bold flex px-1 rounded-r-lg flex-col text-lg items-center justify-center'
+                  >
+                    <GoChevronRight />
+                  </div>
                 </div>
-                <div className='w-fit h-16 flex flex-col gap-0.5 text-nowrap px-2 py-2'>
-                  <span className='w-fit h-fit text-xs font-medium text-gray-500'>{item.specimen_id}</span>
-                  <span className='w-fit h-fit text-base font-semibold text-black leading-tight'>
-                    {item.species?.name_kr || '알 수 없음'}
-                  </span>
-                  <span className='w-fit h-fit text-xxs font-normal text-black/40 leading-none'>
-                    {item.species?.name_en || 'Unknown'}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    backgroundColor:
-                      CLASSIFICATION_COLORS[extractClassificationKey(item.species?.classifications?.name || '')],
-                  }}
-                  className='w-fit h-16 text-white font-bold flex px-1 rounded-r-lg flex-col text-lg items-center justify-center'
-                >
-                  <GoChevronRight />
-                </div>
-              </div>
-            </OverlayViewF>
-          ))}
+              </OverlayViewF>
+            )
+          })}
 
         <LiveLocationLayer />
       </GoogleMap>
 
-      {/* 소장처 모달 */}
       <CollectionModal
         selectedCollection={selectedCollection}
         setSelectedCollection={setSelectedCollection}
         setSelectedHeritage={setSelectedHeritage}
       />
-      {/* 표본 모달 */}
       <HeritageModal
         specimens={specimens || []}
         selectedSpeciemen={selectedHeritage}
