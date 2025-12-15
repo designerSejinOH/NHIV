@@ -33,7 +33,7 @@
     "classnames": "^2.5.1",
     "glsl-random": "^0.0.5",
     "motion": "^12.23.9",
-    "next": "^14.0.4",
+    "next": "14.2.35",
     "postprocessing": "^6.37.6",
     "r3f-perf": "^7.2.3",
     "rc-slider": "^11.1.9",
